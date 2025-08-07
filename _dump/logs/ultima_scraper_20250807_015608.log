@@ -1,0 +1,39 @@
+2025-08-07 01:56:08 - asyncio - DEBUG - [selector_events.py:64] - Using selector: EpollSelector
+2025-08-07 01:56:08 - __main__ - INFO - [fetch_all_messages_to_json.py:23] - Starting fetch all messages to JSON
+2025-08-07 01:56:09 - httpcore.connection - DEBUG - [_trace.py:47] - connect_tcp.started host='raw.githubusercontent.com' port=443 local_address=None timeout=300 socket_options=None
+2025-08-07 01:56:09 - httpcore.connection - DEBUG - [_trace.py:47] - connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x7f78b88fa930>
+2025-08-07 01:56:09 - httpcore.connection - DEBUG - [_trace.py:47] - start_tls.started ssl_context=<ssl.SSLContext object at 0x7f78b7098e50> server_hostname='raw.githubusercontent.com' timeout=300
+2025-08-07 01:56:09 - httpcore.connection - DEBUG - [_trace.py:47] - start_tls.complete return_value=<httpcore._backends.sync.SyncStream object at 0x7f78b76c19a0>
+2025-08-07 01:56:09 - httpcore.http11 - DEBUG - [_trace.py:47] - send_request_headers.started request=<Request [b'GET']>
+2025-08-07 01:56:09 - httpcore.http11 - DEBUG - [_trace.py:47] - send_request_headers.complete
+2025-08-07 01:56:09 - httpcore.http11 - DEBUG - [_trace.py:47] - send_request_body.started request=<Request [b'GET']>
+2025-08-07 01:56:09 - httpcore.http11 - DEBUG - [_trace.py:47] - send_request_body.complete
+2025-08-07 01:56:09 - httpcore.http11 - DEBUG - [_trace.py:47] - receive_response_headers.started request=<Request [b'GET']>
+2025-08-07 01:56:09 - httpcore.http11 - DEBUG - [_trace.py:47] - receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Connection', b'keep-alive'), (b'Content-Length', b'345'), (b'Cache-Control', b'max-age=300'), (b'Content-Security-Policy', b"default-src 'none'; style-src 'unsafe-inline'; sandbox"), (b'Content-Type', b'text/plain; charset=utf-8'), (b'ETag', b'W/"c394a81a64c1c2987fd5a1bd065ea423f6f6167b1f7290c2c64fd8f8d541ed8d"'), (b'Strict-Transport-Security', b'max-age=31536000'), (b'X-Content-Type-Options', b'nosniff'), (b'X-Frame-Options', b'deny'), (b'X-XSS-Protection', b'1; mode=block'), (b'X-GitHub-Request-Id', b'12D3:2F9DC9:C95D9:27CC64:689375EF'), (b'Content-Encoding', b'gzip'), (b'Accept-Ranges', b'bytes'), (b'Date', b'Wed, 06 Aug 2025 17:56:10 GMT'), (b'Via', b'1.1 varnish'), (b'X-Served-By', b'cache-mnl9729-MNL'), (b'X-Cache', b'HIT'), (b'X-Cache-Hits', b'0'), (b'X-Timer', b'S1754502971.589251,VS0,VE2'), (b'Vary', b'Authorization,Accept-Encoding'), (b'Access-Control-Allow-Origin', b'*'), (b'Cross-Origin-Resource-Policy', b'cross-origin'), (b'X-Fastly-Request-ID', b'11a9bf02204d1482daaf90682c17b6ae9c11b0a3'), (b'Expires', b'Wed, 06 Aug 2025 18:01:10 GMT'), (b'Source-Age', b'156')])
+2025-08-07 01:56:09 - httpx - INFO - [_client.py:1025] - HTTP Request: GET https://raw.githubusercontent.com/DATAHOARDERS/dynamic-rules/main/onlyfans.json "HTTP/1.1 200 OK"
+2025-08-07 01:56:09 - httpcore.http11 - DEBUG - [_trace.py:47] - receive_response_body.started request=<Request [b'GET']>
+2025-08-07 01:56:09 - httpcore.http11 - DEBUG - [_trace.py:47] - receive_response_body.complete
+2025-08-07 01:56:09 - httpcore.http11 - DEBUG - [_trace.py:47] - response_closed.started
+2025-08-07 01:56:09 - httpcore.http11 - DEBUG - [_trace.py:47] - response_closed.complete
+2025-08-07 01:56:09 - httpcore.connection - DEBUG - [_trace.py:47] - close.started
+2025-08-07 01:56:09 - httpcore.connection - DEBUG - [_trace.py:47] - close.complete
+2025-08-07 01:56:09 - __main__ - INFO - [fetch_all_messages_to_json.py:37] - Loaded authentication from auth.json
+2025-08-07 01:56:10 - __main__ - INFO - [fetch_all_messages_to_json.py:46] - ✓ Authentication successful
+2025-08-07 01:56:15 - __main__ - INFO - [fetch_all_messages_to_json.py:54] - Fetching user: heyitsmilliexx
+2025-08-07 01:56:15 - __main__ - INFO - [fetch_all_messages_to_json.py:61] - ✓ Found user: heyitsmilliexx (ID: 511545745)
+2025-08-07 01:56:15 - __main__ - INFO - [fetch_all_messages_to_json.py:64] - Starting to fetch all messages...
+2025-08-07 01:56:15 - __main__ - INFO - [fetch_all_messages_to_json.py:73] - Fetching page 1 (limit: 100, offset_id: None)...
+2025-08-07 01:56:23 - __main__ - INFO - [fetch_all_messages_to_json.py:100] - ✓ Page 1: fetched 70 new messages (total: 70)
+2025-08-07 01:56:23 - __main__ - INFO - [fetch_all_messages_to_json.py:73] - Fetching page 2 (limit: 100, offset_id: 6439154436717)...
+2025-08-07 01:56:23 - __main__ - WARNING - [fetch_all_messages_to_json.py:91] - Page 2: All messages were duplicates
+2025-08-07 01:56:24 - __main__ - INFO - [fetch_all_messages_to_json.py:73] - Fetching page 3 (limit: 100, offset_id: 6439154436717)...
+2025-08-07 01:56:24 - __main__ - WARNING - [fetch_all_messages_to_json.py:91] - Page 3: All messages were duplicates
+2025-08-07 01:56:24 - __main__ - INFO - [fetch_all_messages_to_json.py:73] - Fetching page 4 (limit: 100, offset_id: 6439154436717)...
+2025-08-07 01:56:24 - __main__ - WARNING - [fetch_all_messages_to_json.py:91] - Page 4: All messages were duplicates
+2025-08-07 01:56:24 - __main__ - INFO - [fetch_all_messages_to_json.py:95] - Reached end of messages (multiple duplicate pages)
+2025-08-07 01:56:24 - __main__ - INFO - [fetch_all_messages_to_json.py:117] - 
+✓ Finished fetching! Total messages: 70
+2025-08-07 01:56:24 - __main__ - INFO - [fetch_all_messages_to_json.py:120] - Converting messages to JSON format...
+2025-08-07 01:56:24 - __main__ - INFO - [fetch_all_messages_to_json.py:173] - Saving to messages_heyitsmilliexx_20250807_015624.json...
+2025-08-07 01:56:24 - __main__ - INFO - [fetch_all_messages_to_json.py:189] - ✓ Successfully saved 70 messages to messages_heyitsmilliexx_20250807_015624.json
+2025-08-07 01:56:24 - __main__ - INFO - [fetch_all_messages_to_json.py:224] - API connections closed

@@ -1,0 +1,302 @@
+{
+  "user": {
+    "id": 482888977,
+    "username": "ariawolftv",
+    "name": "Aria Wolf"
+  },
+  "fetch_date": "2025-08-07T02:56:07.770353",
+  "total_messages": 11,
+  "messages": [
+    {
+      "id": 6518484968297,
+      "text": "how are you??",
+      "price": 0,
+      "price_dollars": 0,
+      "is_free": true,
+      "is_tip": false,
+      "is_opened": false,
+      "is_new": false,
+      "is_from_queue": false,
+      "created_at": "2025-08-01T19:28:20+00:00",
+      "changed_at": "2025-08-01T19:28:20+00:00",
+      "media_count": 0,
+      "preview_count": 0,
+      "is_liked": false,
+      "is_media_ready": true,
+      "can_purchase": false,
+      "locked_text": false,
+      "response_type": "message",
+      "author": {
+        "id": 482888977,
+        "username": "ariawolftv",
+        "name": "Aria Wolf"
+      }
+    },
+    {
+      "id": 6517993192564,
+      "text": "<p>eepy</p>",
+      "price": 0,
+      "price_dollars": 0,
+      "is_free": true,
+      "is_tip": false,
+      "is_opened": false,
+      "is_new": false,
+      "is_from_queue": false,
+      "created_at": "2025-08-01T18:17:19+00:00",
+      "changed_at": "2025-08-01T18:17:19+00:00",
+      "media_count": 0,
+      "preview_count": 0,
+      "is_liked": false,
+      "is_media_ready": true,
+      "can_purchase": false,
+      "locked_text": false,
+      "response_type": "message",
+      "author": {
+        "id": 513665682,
+        "username": "u513665682",
+        "name": "Ace Eca"
+      }
+    },
+    {
+      "id": 6500310943941,
+      "text": "Today I want to spend all day in bed.. you gonna make me company?😭",
+      "price": 0,
+      "price_dollars": 0,
+      "is_free": true,
+      "is_tip": false,
+      "is_opened": false,
+      "is_new": false,
+      "is_from_queue": true,
+      "created_at": "2025-07-30T21:06:34+00:00",
+      "changed_at": "2025-07-30T21:06:34+00:00",
+      "media_count": 1,
+      "preview_count": 0,
+      "is_liked": false,
+      "is_media_ready": true,
+      "can_purchase": false,
+      "locked_text": false,
+      "response_type": "message",
+      "author": {
+        "id": 482888977,
+        "username": "ariawolftv",
+        "name": "Aria Wolf"
+      },
+      "media": [
+        {
+          "id": null,
+          "type": null,
+          "can_view": null,
+          "has_error": null
+        }
+      ]
+    },
+    {
+      "id": 6441977922275,
+      "text": "tell me about yourself , where u from and how old are you??",
+      "price": 0,
+      "price_dollars": 0,
+      "is_free": true,
+      "is_tip": false,
+      "is_opened": false,
+      "is_new": false,
+      "is_from_queue": false,
+      "created_at": "2025-07-24T10:10:28+00:00",
+      "changed_at": "2025-07-24T10:10:28+00:00",
+      "media_count": 0,
+      "preview_count": 0,
+      "is_liked": false,
+      "is_media_ready": true,
+      "can_purchase": false,
+      "locked_text": false,
+      "response_type": "message",
+      "author": {
+        "id": 482888977,
+        "username": "ariawolftv",
+        "name": "Aria Wolf"
+      }
+    },
+    {
+      "id": 6441977113099,
+      "text": "ahh ok",
+      "price": 0,
+      "price_dollars": 0,
+      "is_free": true,
+      "is_tip": false,
+      "is_opened": false,
+      "is_new": false,
+      "is_from_queue": false,
+      "created_at": "2025-07-24T10:10:22+00:00",
+      "changed_at": "2025-07-24T10:10:22+00:00",
+      "media_count": 0,
+      "preview_count": 0,
+      "is_liked": false,
+      "is_media_ready": true,
+      "can_purchase": false,
+      "locked_text": false,
+      "response_type": "message",
+      "author": {
+        "id": 482888977,
+        "username": "ariawolftv",
+        "name": "Aria Wolf"
+      }
+    },
+    {
+      "id": 6440041448464,
+      "text": "<p>sorrry hun i don't think were allowed to share that info here 😘</p>",
+      "price": 0,
+      "price_dollars": 0,
+      "is_free": true,
+      "is_tip": false,
+      "is_opened": false,
+      "is_new": false,
+      "is_from_queue": false,
+      "created_at": "2025-07-24T05:13:07+00:00",
+      "changed_at": "2025-07-24T05:13:07+00:00",
+      "media_count": 0,
+      "preview_count": 0,
+      "is_liked": false,
+      "is_media_ready": true,
+      "can_purchase": false,
+      "locked_text": false,
+      "response_type": "message",
+      "author": {
+        "id": 513665682,
+        "username": "u513665682",
+        "name": "Ace Eca"
+      }
+    },
+    {
+      "id": 6439655332786,
+      "text": "Btw what’s your name ??",
+      "price": 0,
+      "price_dollars": 0,
+      "is_free": true,
+      "is_tip": false,
+      "is_opened": false,
+      "is_new": false,
+      "is_from_queue": false,
+      "created_at": "2025-07-24T04:18:51+00:00",
+      "changed_at": "2025-07-24T04:18:51+00:00",
+      "media_count": 0,
+      "preview_count": 0,
+      "is_liked": false,
+      "is_media_ready": true,
+      "can_purchase": false,
+      "locked_text": false,
+      "response_type": "message",
+      "author": {
+        "id": 482888977,
+        "username": "ariawolftv",
+        "name": "Aria Wolf"
+      }
+    },
+    {
+      "id": 6439654954511,
+      "text": "Thanks for the subb ❤️",
+      "price": 0,
+      "price_dollars": 0,
+      "is_free": true,
+      "is_tip": false,
+      "is_opened": false,
+      "is_new": false,
+      "is_from_queue": false,
+      "created_at": "2025-07-24T04:18:47+00:00",
+      "changed_at": "2025-07-24T04:18:47+00:00",
+      "media_count": 0,
+      "preview_count": 0,
+      "is_liked": false,
+      "is_media_ready": true,
+      "can_purchase": false,
+      "locked_text": false,
+      "response_type": "message",
+      "author": {
+        "id": 482888977,
+        "username": "ariawolftv",
+        "name": "Aria Wolf"
+      }
+    },
+    {
+      "id": 6439654497596,
+      "text": "Heyy",
+      "price": 0,
+      "price_dollars": 0,
+      "is_free": true,
+      "is_tip": false,
+      "is_opened": false,
+      "is_new": false,
+      "is_from_queue": false,
+      "created_at": "2025-07-24T04:18:42+00:00",
+      "changed_at": "2025-07-24T04:18:42+00:00",
+      "media_count": 0,
+      "preview_count": 0,
+      "is_liked": false,
+      "is_media_ready": true,
+      "can_purchase": false,
+      "locked_text": false,
+      "response_type": "message",
+      "author": {
+        "id": 482888977,
+        "username": "ariawolftv",
+        "name": "Aria Wolf"
+      }
+    },
+    {
+      "id": 6439148982402,
+      "text": "<p>hi</p>",
+      "price": 0,
+      "price_dollars": 0,
+      "is_free": true,
+      "is_tip": false,
+      "is_opened": false,
+      "is_new": false,
+      "is_from_queue": false,
+      "created_at": "2025-07-24T03:02:48+00:00",
+      "changed_at": "2025-07-24T03:02:48+00:00",
+      "media_count": 0,
+      "preview_count": 0,
+      "is_liked": false,
+      "is_media_ready": true,
+      "can_purchase": false,
+      "locked_text": false,
+      "response_type": "message",
+      "author": {
+        "id": 513665682,
+        "username": "u513665682",
+        "name": "Ace Eca"
+      }
+    },
+    {
+      "id": 6439147348130,
+      "text": "<p>Heey love ❤️ thank you for subscribing—it means a lot to have you here. This page is my calm little space, but if you’d like to connect more personally with me (in many ways)… you’re always welcome in my VIP 💌👇<a href=\"https://onlyfans.com/babyriia/c1\">https://onlyfans.com/babyriia/c1</a> </p>",
+      "price": 0,
+      "price_dollars": 0,
+      "is_free": true,
+      "is_tip": false,
+      "is_opened": false,
+      "is_new": false,
+      "is_from_queue": false,
+      "created_at": "2025-07-24T03:02:34+00:00",
+      "changed_at": "2025-07-24T03:02:34+00:00",
+      "media_count": 1,
+      "preview_count": 0,
+      "is_liked": false,
+      "is_media_ready": true,
+      "can_purchase": false,
+      "locked_text": false,
+      "response_type": "message",
+      "author": {
+        "id": 482888977,
+        "username": "ariawolftv",
+        "name": "Aria Wolf"
+      },
+      "media": [
+        {
+          "id": null,
+          "type": null,
+          "can_view": null,
+          "has_error": null
+        }
+      ]
+    }
+  ]
+}
