@@ -36,9 +36,9 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI app with lifespan
 app = FastAPI(
-    title="UltimaScraperAPI Server",
-    description="A FastAPI server for UltimaScraperAPI",
-    version="1.0.0",
+    title="UltimaScraperAPI Server - Clean Version",
+    description="A FastAPI server for UltimaScraperAPI with only working endpoints",
+    version="2.0.0",
     lifespan=lifespan
 )
 
@@ -68,27 +68,6 @@ class MessageRequest(BaseModel):
     text: str
     media_ids: Optional[List[int]] = []
 
-class PostRequest(BaseModel):
-    text: str
-    media_ids: Optional[List[int]] = []
-    price: Optional[float] = 0.0
-
-class TipRequest(BaseModel):
-    amount: float
-    message: Optional[str] = ""
-
-class ProfileUpdateRequest(BaseModel):
-    name: Optional[str] = None
-    bio: Optional[str] = None
-    location: Optional[str] = None
-
-class SubscriptionPriceRequest(BaseModel):
-    price: float
-
-class PromotionRequest(BaseModel):
-    discount: float
-    duration: int
-
 # Dependency to check authentication
 async def require_auth():
     global authed_instance
@@ -100,39 +79,43 @@ async def require_auth():
 @app.get("/")
 async def home():
     return {
-        "message": "UltimaScraperAPI Server (FastAPI)",
-        "version": "1.0.0",
+        "message": "UltimaScraperAPI Server - Clean Version",
+        "version": "2.0.0",
         "documentation": "/docs",
         "api_documentation": "/api/docs",
-        "endpoints": [
-            "/api/auth",
+        "working_endpoints": [
+            # System
             "/api/health",
             "/api/docs",
+            # Authentication
+            "/api/auth",
+            # User Information
             "/api/me",
             "/api/user/{username}",
+            # Content Retrieval
             "/api/user/{username}/posts",
             "/api/user/{username}/messages",
             "/api/user/{username}/stories",
             "/api/user/{username}/highlights",
-            "/api/subscriptions",
-            "/api/chats",
-            "/api/notifications",
-            "/api/earnings",
-            "/api/analytics",
-            "/api/fans",
-            "/api/following",
-            "/api/blocked-users",
-            "/api/restricted-users",
-            "/api/vault",
-            "/api/promotions",
-            "/api/live-streams",
-            "/api/tips",
-            "/api/mass-messages",
             "/api/user/{username}/mass-messages",
-            "/api/transactions",
             "/api/user/{username}/archived-stories",
             "/api/user/{username}/socials",
-            "/api/paid-content"
+            # Subscriptions & Chats
+            "/api/subscriptions",
+            "/api/chats",
+            "/api/mass-messages",
+            # Messaging
+            "/api/user/{username}/message",
+            # Interactions
+            "/api/post/{post_id}/like",
+            "/api/user/{user_id}/block",
+            # Financial
+            "/api/transactions",
+            "/api/paid-content",
+            # Vault
+            "/api/vault",
+            # Promotions (Read-only)
+            "/api/promotions"
         ]
     }
 
@@ -141,17 +124,17 @@ async def home():
 async def health_check():
     return {
         "status": "ok",
-        "service": "UltimaScraperAPI FastAPI Server",
+        "service": "UltimaScraperAPI FastAPI Server - Clean Version",
         "timestamp": datetime.now().isoformat()
     }
 
 # API documentation endpoint
 @app.get("/api/docs")
 async def api_documentation():
-    """Return complete API documentation"""
+    """Return API documentation for working endpoints only"""
     return {
-        "title": "UltimaScraperAPI Documentation",
-        "version": "1.0.0",
+        "title": "UltimaScraperAPI Documentation - Working Endpoints",
+        "version": "2.0.0",
         "base_url": "http://localhost:5000",
         "authentication": {
             "description": "All endpoints except /api/auth require authentication via auth.json",
@@ -195,13 +178,6 @@ async def api_documentation():
                     "auth_required": True,
                     "parameters": {"username": "OnlyFans username", "limit": 50, "offset": 0},
                     "response": {"messages": [], "count": 25, "limit": 50, "offset": 0}
-                },
-                "/api/user/{username}/stories": {
-                    "method": "GET",
-                    "description": "Get stories from a specific user",
-                    "auth_required": True,
-                    "parameters": {"username": "OnlyFans username"},
-                    "response": {"stories": []}
                 }
             }
         }
@@ -296,7 +272,9 @@ async def get_user(username: str = Path(...), authed_instance=Depends(require_au
             "photos_count": getattr(user, 'photos_count', 0),
             "videos_count": getattr(user, 'videos_count', 0),
             "joined": getattr(user, 'join_date', None),
-            "is_verified": getattr(user, 'is_verified', False)
+            "is_verified": getattr(user, 'is_verified', False),
+            "subscription_price": getattr(user, 'subscribe_price', 0),
+            "promotions": getattr(user, 'promotions', [])
         }
     
     except Exception as e:
@@ -461,6 +439,95 @@ async def get_user_highlights(username: str = Path(...), authed_instance=Depends
         logger.error(f"Get user highlights error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/user/{username}/mass-messages")
+async def get_user_mass_messages(
+    username: str = Path(...),
+    message_cutoff_id: int | None = Query(None),
+    authed_instance=Depends(require_auth)
+):
+    try:
+        user = await authed_instance.get_user(username)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        mass_messages = await user.get_mass_messages(message_cutoff_id=message_cutoff_id)
+        
+        mass_messages_data = []
+        for message in mass_messages:
+            mass_messages_data.append({
+                "id": message.id,
+                "text": getattr(message, 'text', ''),
+                "price": getattr(message, 'price', 0),
+                "created_at": message.created_at.isoformat() if hasattr(message, 'created_at') else None,
+                "is_mass_message": True
+            })
+        
+        return {"mass_messages": mass_messages_data}
+    
+    except Exception as e:
+        logger.error(f"Get user mass messages error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/user/{username}/archived-stories")
+async def get_archived_stories(
+    username: str = Path(...),
+    limit: int = Query(100, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    authed_instance=Depends(require_auth)
+):
+    try:
+        user = await authed_instance.get_user(username)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        stories = await user.get_archived_stories(limit=limit, offset=offset)
+        
+        stories_data = []
+        for story in stories:
+            story_dict = {
+                "id": story.id,
+                "created_at": story.created_at.isoformat() if hasattr(story, 'created_at') else None,
+                "expires_at": getattr(story, 'expires_at', None),
+                "media": []
+            }
+            
+            if hasattr(story, 'media') and story.media:
+                for media in story.media:
+                    story_dict["media"].append({
+                        "id": media.id,
+                        "type": getattr(media, 'type', 'photo'),
+                        "url": getattr(media, 'url', None),
+                        "preview": getattr(media, 'preview', None)
+                    })
+            
+            stories_data.append(story_dict)
+        
+        return {
+            "archived_stories": stories_data,
+            "count": len(stories_data),
+            "limit": limit,
+            "offset": offset
+        }
+    
+    except Exception as e:
+        logger.error(f"Get archived stories error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/user/{username}/socials")
+async def get_user_socials(username: str = Path(...), authed_instance=Depends(require_auth)):
+    try:
+        user = await authed_instance.get_user(username)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        socials = await user.get_socials()
+        
+        return {"socials": socials}
+    
+    except Exception as e:
+        logger.error(f"Get user socials error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Subscription and Social Endpoints
 @app.get("/api/subscriptions")
 async def get_subscriptions(
@@ -524,7 +591,41 @@ async def get_chats(
         logger.error(f"Get chats error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# Interaction Endpoints
+@app.get("/api/mass-messages")
+async def get_mass_messages(
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    authed_instance=Depends(require_auth)
+):
+    try:
+        mass_messages = await authed_instance.get_mass_message_stats(limit=limit, offset=offset)
+        
+        mass_messages_data = []
+        for message in mass_messages:
+            mass_messages_data.append({
+                "id": message.id,
+                "text": getattr(message, 'text', ''),
+                "price": getattr(message, 'price', 0),
+                "created_at": message.created_at.isoformat() if hasattr(message, 'created_at') else None,
+                "stats": {
+                    "sent_count": getattr(message, 'sent_count', 0),
+                    "opened_count": getattr(message, 'opened_count', 0),
+                    "revenue": getattr(message, 'revenue', 0)
+                }
+            })
+        
+        return {
+            "mass_messages": mass_messages_data,
+            "count": len(mass_messages_data),
+            "limit": limit,
+            "offset": offset
+        }
+    
+    except Exception as e:
+        logger.error(f"Get mass messages error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Messaging Endpoints
 @app.post("/api/user/{username}/message")
 async def send_message(
     username: str = Path(...),
@@ -541,6 +642,9 @@ async def send_message(
             media_ids=request.media_ids
         )
         
+        if not message:
+            raise HTTPException(status_code=400, detail="Failed to send message")
+        
         return {
             "success": True,
             "message_id": message.id,
@@ -552,10 +656,13 @@ async def send_message(
         logger.error(f"Send message error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# Interaction Endpoints
 @app.post("/api/post/{post_id}/like")
 async def like_post(post_id: int = Path(...), authed_instance=Depends(require_auth)):
     try:
-        result = await authed_instance.like_post(post_id)
+        # Find the post first to get its category
+        # For now, assume it's a post (you might need to enhance this)
+        result = await authed_instance.user.like("posts", post_id)
         return {"success": True, "liked": True}
     
     except Exception as e:
@@ -565,223 +672,21 @@ async def like_post(post_id: int = Path(...), authed_instance=Depends(require_au
 @app.delete("/api/post/{post_id}/like")
 async def unlike_post(post_id: int = Path(...), authed_instance=Depends(require_auth)):
     try:
-        result = await authed_instance.unlike_post(post_id)
+        result = await authed_instance.user.unlike("posts", post_id)
         return {"success": True, "liked": False}
     
     except Exception as e:
         logger.error(f"Unlike post error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/user/{username}/tip")
-async def send_tip(
-    username: str = Path(...),
-    request: TipRequest = Body(...),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        user = await authed_instance.get_user(username)
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        
-        tip = await user.send_tip(
-            amount=request.amount,
-            message=request.message
-        )
-        
-        return {
-            "success": True,
-            "tip_id": tip.id,
-            "amount": request.amount,
-            "message": request.message
-        }
-    
-    except Exception as e:
-        logger.error(f"Send tip error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Content Creation Endpoints
-@app.post("/api/posts")
-async def create_post(
-    request: PostRequest = Body(...),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        post = await authed_instance.create_post(
-            text=request.text,
-            media_ids=request.media_ids,
-            price=request.price
-        )
-        
-        return {
-            "success": True,
-            "post_id": post.id,
-            "text": post.text,
-            "price": request.price,
-            "created_at": post.created_at.isoformat() if hasattr(post, 'created_at') else None
-        }
-    
-    except Exception as e:
-        logger.error(f"Create post error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.put("/api/post/{post_id}")
-async def edit_post(
-    post_id: int = Path(...),
-    request: PostRequest = Body(...),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        post = await authed_instance.edit_post(
-            post_id=post_id,
-            text=request.text,
-            price=request.price
-        )
-        
-        return {
-            "success": True,
-            "post_id": post_id,
-            "text": request.text,
-            "price": request.price
-        }
-    
-    except Exception as e:
-        logger.error(f"Edit post error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.delete("/api/post/{post_id}")
-async def delete_post(post_id: int = Path(...), authed_instance=Depends(require_auth)):
-    try:
-        await authed_instance.delete_post(post_id)
-        return {"success": True, "message": "Post deleted successfully"}
-    
-    except Exception as e:
-        logger.error(f"Delete post error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Analytics and Financial Endpoints
-@app.get("/api/earnings")
-async def get_earnings(
-    start_date: Optional[str] = Query(None),
-    end_date: Optional[str] = Query(None),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        earnings = await authed_instance.get_earnings(
-            start_date=start_date,
-            end_date=end_date
-        )
-        
-        return {
-            "total_earnings": getattr(earnings, 'total', 0),
-            "subscriptions": getattr(earnings, 'subscriptions', 0),
-            "tips": getattr(earnings, 'tips', 0),
-            "posts": getattr(earnings, 'posts', 0),
-            "messages": getattr(earnings, 'messages', 0),
-            "period": {
-                "start_date": start_date,
-                "end_date": end_date
-            }
-        }
-    
-    except Exception as e:
-        logger.error(f"Get earnings error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/analytics")
-async def get_analytics(
-    start_date: Optional[str] = Query(None),
-    end_date: Optional[str] = Query(None),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        analytics = await authed_instance.get_analytics(
-            start_date=start_date,
-            end_date=end_date
-        )
-        
-        return {
-            "profile_views": getattr(analytics, 'profile_views', 0),
-            "new_subscribers": getattr(analytics, 'new_subscribers', 0),
-            "likes_received": getattr(analytics, 'likes_received', 0),
-            "messages_sent": getattr(analytics, 'messages_sent', 0),
-            "posts_created": getattr(analytics, 'posts_created', 0),
-            "period": {
-                "start_date": start_date,
-                "end_date": end_date
-            }
-        }
-    
-    except Exception as e:
-        logger.error(f"Get analytics error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Fan Management Endpoints
-@app.get("/api/fans")
-async def get_fans(
-    limit: int = Query(50, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        fans = await authed_instance.get_fans(limit=limit, offset=offset)
-        
-        fans_data = []
-        for fan in fans:
-            fans_data.append({
-                "id": fan.id,
-                "username": fan.username,
-                "name": getattr(fan, 'name', None),
-                "avatar": getattr(fan, 'avatar', None),
-                "subscription_date": getattr(fan, 'subscription_date', None),
-                "total_spent": getattr(fan, 'total_spent', 0)
-            })
-        
-        return {
-            "fans": fans_data,
-            "count": len(fans_data),
-            "limit": limit,
-            "offset": offset
-        }
-    
-    except Exception as e:
-        logger.error(f"Get fans error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/following")
-async def get_following(
-    limit: int = Query(50, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        following = await authed_instance.get_following(limit=limit, offset=offset)
-        
-        following_data = []
-        for user in following:
-            following_data.append({
-                "id": user.id,
-                "username": user.username,
-                "name": getattr(user, 'name', None),
-                "avatar": getattr(user, 'avatar', None),
-                "subscription_price": getattr(user, 'subscription_price', 0)
-            })
-        
-        return {
-            "following": following_data,
-            "count": len(following_data),
-            "limit": limit,
-            "offset": offset
-        }
-    
-    except Exception as e:
-        logger.error(f"Get following error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# User Management Endpoints
 @app.post("/api/user/{user_id}/block")
 async def block_user(user_id: int = Path(...), authed_instance=Depends(require_auth)):
     try:
-        await authed_instance.block_user(user_id)
+        user = await authed_instance.get_user(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        await user.block()
         return {"success": True, "message": "User blocked successfully"}
     
     except Exception as e:
@@ -791,275 +696,18 @@ async def block_user(user_id: int = Path(...), authed_instance=Depends(require_a
 @app.delete("/api/user/{user_id}/block")
 async def unblock_user(user_id: int = Path(...), authed_instance=Depends(require_auth)):
     try:
-        await authed_instance.unblock_user(user_id)
+        user = await authed_instance.get_user(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        await user.unblock()
         return {"success": True, "message": "User unblocked successfully"}
     
     except Exception as e:
         logger.error(f"Unblock user error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/blocked-users")
-async def get_blocked_users(authed_instance=Depends(require_auth)):
-    try:
-        blocked_users = await authed_instance.get_blocked_users()
-        
-        blocked_data = []
-        for user in blocked_users:
-            blocked_data.append({
-                "id": user.id,
-                "username": user.username,
-                "name": getattr(user, 'name', None),
-                "avatar": getattr(user, 'avatar', None)
-            })
-        
-        return {"blocked_users": blocked_data}
-    
-    except Exception as e:
-        logger.error(f"Get blocked users error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Profile Management Endpoints
-@app.put("/api/profile")
-async def update_profile(
-    request: ProfileUpdateRequest = Body(...),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        profile = await authed_instance.set_profile_info(
-            name=request.name,
-            bio=request.bio,
-            location=request.location
-        )
-        
-        return {
-            "success": True,
-            "message": "Profile updated successfully",
-            "profile": {
-                "name": request.name,
-                "bio": request.bio,
-                "location": request.location
-            }
-        }
-    
-    except Exception as e:
-        logger.error(f"Update profile error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.put("/api/subscription-price")
-async def set_subscription_price(
-    request: SubscriptionPriceRequest = Body(...),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        await authed_instance.set_subscription_price(request.price)
-        return {
-            "success": True,
-            "message": "Subscription price updated successfully",
-            "price": request.price
-        }
-    
-    except Exception as e:
-        logger.error(f"Set subscription price error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Notifications Endpoint
-@app.get("/api/notifications")
-async def get_notifications(
-    limit: int = Query(50, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        notifications = await authed_instance.get_notifications(limit=limit, offset=offset)
-        
-        notifications_data = []
-        for notification in notifications:
-            notifications_data.append({
-                "id": notification.id,
-                "type": getattr(notification, 'type', ''),
-                "message": getattr(notification, 'message', ''),
-                "is_read": getattr(notification, 'is_read', False),
-                "created_at": notification.created_at.isoformat() if hasattr(notification, 'created_at') else None
-            })
-        
-        return {
-            "notifications": notifications_data,
-            "count": len(notifications_data),
-            "limit": limit,
-            "offset": offset
-        }
-    
-    except Exception as e:
-        logger.error(f"Get notifications error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Vault Endpoints
-@app.get("/api/vault")
-async def get_vault_media(
-    limit: int = Query(50, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        vault_media = await authed_instance.get_vault_media(limit=limit, offset=offset)
-        
-        vault_data = []
-        for media in vault_media:
-            vault_data.append({
-                "id": media.id,
-                "type": getattr(media, 'type', 'photo'),
-                "url": getattr(media, 'url', None),
-                "preview": getattr(media, 'preview', None),
-                "created_at": media.created_at.isoformat() if hasattr(media, 'created_at') else None
-            })
-        
-        return {
-            "vault_media": vault_data,
-            "count": len(vault_data),
-            "limit": limit,
-            "offset": offset
-        }
-    
-    except Exception as e:
-        logger.error(f"Get vault media error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Promotions Endpoints
-@app.get("/api/promotions")
-async def get_promotions(authed_instance=Depends(require_auth)):
-    try:
-        promotions = await authed_instance.get_promotions()
-        
-        promotions_data = []
-        for promotion in promotions:
-            promotions_data.append({
-                "id": promotion.id,
-                "discount": getattr(promotion, 'discount', 0),
-                "duration": getattr(promotion, 'duration', 0),
-                "is_active": getattr(promotion, 'is_active', False),
-                "created_at": promotion.created_at.isoformat() if hasattr(promotion, 'created_at') else None
-            })
-        
-        return {"promotions": promotions_data}
-    
-    except Exception as e:
-        logger.error(f"Get promotions error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/api/promotions")
-async def create_promotion(
-    request: PromotionRequest = Body(...),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        promotion = await authed_instance.create_promotion(
-            discount=request.discount,
-            duration=request.duration
-        )
-        
-        return {
-            "success": True,
-            "promotion_id": promotion.id,
-            "discount": request.discount,
-            "duration": request.duration
-        }
-    
-    except Exception as e:
-        logger.error(f"Create promotion error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Tips Endpoint
-@app.get("/api/tips")
-async def get_tips(
-    limit: int = Query(50, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        tips = await authed_instance.get_tips(limit=limit, offset=offset)
-        
-        tips_data = []
-        for tip in tips:
-            tips_data.append({
-                "id": tip.id,
-                "amount": getattr(tip, 'amount', 0),
-                "message": getattr(tip, 'message', ''),
-                "from_user": getattr(tip, 'from_user', {}),
-                "created_at": tip.created_at.isoformat() if hasattr(tip, 'created_at') else None
-            })
-        
-        return {
-            "tips": tips_data,
-            "count": len(tips_data),
-            "limit": limit,
-            "offset": offset
-        }
-    
-    except Exception as e:
-        logger.error(f"Get tips error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Mass Messages Endpoints
-@app.get("/api/mass-messages")
-async def get_mass_messages(
-    limit: int = Query(50, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        mass_messages = await authed_instance.get_mass_messages(limit=limit, offset=offset)
-        
-        mass_messages_data = []
-        for message in mass_messages:
-            mass_messages_data.append({
-                "id": message.id,
-                "text": getattr(message, 'text', ''),
-                "price": getattr(message, 'price', 0),
-                "created_at": message.created_at.isoformat() if hasattr(message, 'created_at') else None,
-                "media": []
-            })
-        
-        return {
-            "mass_messages": mass_messages_data,
-            "count": len(mass_messages_data),
-            "limit": limit,
-            "offset": offset
-        }
-    
-    except Exception as e:
-        logger.error(f"Get mass messages error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/user/{username}/mass-messages")
-async def get_user_mass_messages(
-    username: str = Path(...),
-    message_cutoff_id: int | None = Query(None),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        user = await authed_instance.get_user(username)
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        
-        mass_messages = await user.get_mass_messages(message_cutoff_id=message_cutoff_id)
-        
-        mass_messages_data = []
-        for message in mass_messages:
-            mass_messages_data.append({
-                "id": message.id,
-                "text": getattr(message, 'text', ''),
-                "price": getattr(message, 'price', 0),
-                "created_at": message.created_at.isoformat() if hasattr(message, 'created_at') else None,
-                "is_mass_message": True
-            })
-        
-        return {"mass_messages": mass_messages_data}
-    
-    except Exception as e:
-        logger.error(f"Get user mass messages error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Transactions Endpoint
+# Financial Endpoints
 @app.get("/api/transactions")
 async def get_transactions(authed_instance=Depends(require_auth)):
     try:
@@ -1074,69 +722,6 @@ async def get_transactions(authed_instance=Depends(require_auth)):
         logger.error(f"Get transactions error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# Archived Stories Endpoint
-@app.get("/api/user/{username}/archived-stories")
-async def get_archived_stories(
-    username: str = Path(...),
-    limit: int = Query(100, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        user = await authed_instance.get_user(username)
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        
-        stories = await user.get_archived_stories(limit=limit, offset=offset)
-        
-        stories_data = []
-        for story in stories:
-            story_dict = {
-                "id": story.id,
-                "created_at": story.created_at.isoformat() if hasattr(story, 'created_at') else None,
-                "expires_at": getattr(story, 'expires_at', None),
-                "media": []
-            }
-            
-            if hasattr(story, 'media') and story.media:
-                for media in story.media:
-                    story_dict["media"].append({
-                        "id": media.id,
-                        "type": getattr(media, 'type', 'photo'),
-                        "url": getattr(media, 'url', None),
-                        "preview": getattr(media, 'preview', None)
-                    })
-            
-            stories_data.append(story_dict)
-        
-        return {
-            "archived_stories": stories_data,
-            "count": len(stories_data),
-            "limit": limit,
-            "offset": offset
-        }
-    
-    except Exception as e:
-        logger.error(f"Get archived stories error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Socials Endpoints
-@app.get("/api/user/{username}/socials")
-async def get_user_socials(username: str = Path(...), authed_instance=Depends(require_auth)):
-    try:
-        user = await authed_instance.get_user(username)
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        
-        socials = await user.get_socials()
-        
-        return {"socials": socials}
-    
-    except Exception as e:
-        logger.error(f"Get user socials error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Paid Content Endpoints
 @app.get("/api/paid-content")
 async def get_paid_content(
     performer_id: int | str | None = Query(None),
@@ -1177,29 +762,62 @@ async def get_paid_content(
         logger.error(f"Get paid content error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# Live Streams Endpoint
-@app.get("/api/live-streams")
-async def get_live_streams(authed_instance=Depends(require_auth)):
+# Vault Endpoints
+@app.get("/api/vault")
+async def get_vault_media(
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    authed_instance=Depends(require_auth)
+):
     try:
-        streams = await authed_instance.get_live_streams()
+        vault_media = await authed_instance.get_vault_media(limit=limit, offset=offset)
         
-        streams_data = []
-        for stream in streams:
-            streams_data.append({
-                "id": stream.id,
-                "title": getattr(stream, 'title', ''),
-                "is_live": getattr(stream, 'is_live', False),
-                "viewer_count": getattr(stream, 'viewer_count', 0),
-                "started_at": stream.started_at.isoformat() if hasattr(stream, 'started_at') else None
+        vault_data = []
+        for media in vault_media:
+            vault_data.append({
+                "id": media.get('id'),
+                "type": media.get('type', 'photo'),
+                "url": media.get('src'),
+                "preview": media.get('preview'),
+                "created_at": media.get('createdAt')
             })
         
-        return {"live_streams": streams_data}
+        return {
+            "vault_media": vault_data,
+            "count": len(vault_data),
+            "limit": limit,
+            "offset": offset
+        }
     
     except Exception as e:
-        logger.error(f"Get live streams error: {str(e)}")
+        logger.error(f"Get vault media error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Promotions Endpoints (Read-only)
+@app.get("/api/promotions")
+async def get_promotions(authed_instance=Depends(require_auth)):
+    try:
+        # Get promotions from authenticated user's profile
+        user = authed_instance.user
+        promotions = user.promotions if hasattr(user, 'promotions') else []
+        
+        promotions_data = []
+        for promotion in promotions:
+            promotions_data.append({
+                "id": promotion.get('id'),
+                "discount": promotion.get('discount', 0),
+                "price": promotion.get('price', 0),
+                "duration": promotion.get('duration'),
+                "is_active": promotion.get('isActive', False),
+                "type": promotion.get('type')
+            })
+        
+        return {"promotions": promotions_data}
+    
+    except Exception as e:
+        logger.error(f"Get promotions error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=5000)
-
