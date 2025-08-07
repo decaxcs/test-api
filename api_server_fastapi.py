@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional, Dict, List, Any
 from contextlib import asynccontextmanager
+import asyncio
 import json
 from pathlib import Path as FilePath
 from datetime import datetime
@@ -36,9 +37,9 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI app with lifespan
 app = FastAPI(
-    title="UltimaScraperAPI Server",
-    description="A FastAPI server for UltimaScraperAPI",
-    version="1.0.0",
+    title="UltimaScraperAPI Server - Clean Version",
+    description="A FastAPI server for UltimaScraperAPI with only working endpoints",
+    version="2.0.0",
     lifespan=lifespan
 )
 
@@ -68,26 +69,11 @@ class MessageRequest(BaseModel):
     text: str
     media_ids: Optional[List[int]] = []
 
-class PostRequest(BaseModel):
+class MassMessageRequest(BaseModel):
     text: str
     media_ids: Optional[List[int]] = []
-    price: Optional[float] = 0.0
-
-class TipRequest(BaseModel):
-    amount: float
-    message: Optional[str] = ""
-
-class ProfileUpdateRequest(BaseModel):
-    name: Optional[str] = None
-    bio: Optional[str] = None
-    location: Optional[str] = None
-
-class SubscriptionPriceRequest(BaseModel):
-    price: float
-
-class PromotionRequest(BaseModel):
-    discount: float
-    duration: int
+    price: Optional[int] = 0  # Price in cents (0 for free message)
+    locked_text: Optional[bool] = False  # Whether the text is locked until paid
 
 # Dependency to check authentication
 async def require_auth():
@@ -100,39 +86,43 @@ async def require_auth():
 @app.get("/")
 async def home():
     return {
-        "message": "UltimaScraperAPI Server (FastAPI)",
-        "version": "1.0.0",
+        "message": "UltimaScraperAPI Server - Clean Version",
+        "version": "2.0.0",
         "documentation": "/docs",
         "api_documentation": "/api/docs",
-        "endpoints": [
-            "/api/auth",
+        "working_endpoints": [
+            # System
             "/api/health",
             "/api/docs",
+            # Authentication
+            "/api/auth",
+            # User Information
             "/api/me",
             "/api/user/{username}",
+            # Content Retrieval
             "/api/user/{username}/posts",
             "/api/user/{username}/messages",
             "/api/user/{username}/stories",
             "/api/user/{username}/highlights",
-            "/api/subscriptions",
-            "/api/chats",
-            "/api/notifications",
-            "/api/earnings",
-            "/api/analytics",
-            "/api/fans",
-            "/api/following",
-            "/api/blocked-users",
-            "/api/restricted-users",
-            "/api/vault",
-            "/api/promotions",
-            "/api/live-streams",
-            "/api/tips",
-            "/api/mass-messages",
             "/api/user/{username}/mass-messages",
-            "/api/transactions",
             "/api/user/{username}/archived-stories",
             "/api/user/{username}/socials",
-            "/api/paid-content"
+            # Subscriptions & Chats
+            "/api/subscriptions",
+            "/api/chats",
+            "/api/mass-messages",
+            # Messaging
+            "/api/user/{username}/message",
+            # Interactions
+            "/api/post/{post_id}/like",
+            "/api/user/{user_id}/block",
+            # Financial
+            "/api/transactions",
+            "/api/paid-content",
+            # Vault
+            "/api/vault",
+            # Promotions (Read-only)
+            "/api/promotions"
         ]
     }
 
@@ -141,17 +131,17 @@ async def home():
 async def health_check():
     return {
         "status": "ok",
-        "service": "UltimaScraperAPI FastAPI Server",
+        "service": "UltimaScraperAPI FastAPI Server - Clean Version",
         "timestamp": datetime.now().isoformat()
     }
 
 # API documentation endpoint
 @app.get("/api/docs")
 async def api_documentation():
-    """Return complete API documentation"""
+    """Return API documentation for working endpoints only"""
     return {
-        "title": "UltimaScraperAPI Documentation",
-        "version": "1.0.0",
+        "title": "UltimaScraperAPI Documentation - Working Endpoints",
+        "version": "2.0.0",
         "base_url": "http://localhost:5000",
         "authentication": {
             "description": "All endpoints except /api/auth require authentication via auth.json",
@@ -193,15 +183,8 @@ async def api_documentation():
                     "method": "GET",
                     "description": "Get message history with a specific user",
                     "auth_required": True,
-                    "parameters": {"username": "OnlyFans username", "limit": 50, "offset": 0},
-                    "response": {"messages": [], "count": 25, "limit": 50, "offset": 0}
-                },
-                "/api/user/{username}/stories": {
-                    "method": "GET",
-                    "description": "Get stories from a specific user",
-                    "auth_required": True,
-                    "parameters": {"username": "OnlyFans username"},
-                    "response": {"stories": []}
+                    "parameters": {"username": "OnlyFans username", "limit": 20, "offset_id": "message_id_to_start_from", "cutoff_id": "message_id_to_stop_at"},
+                    "response": {"messages": [], "count": 25, "limit": 20}
                 }
             }
         }
@@ -296,7 +279,9 @@ async def get_user(username: str = Path(...), authed_instance=Depends(require_au
             "photos_count": getattr(user, 'photos_count', 0),
             "videos_count": getattr(user, 'videos_count', 0),
             "joined": getattr(user, 'join_date', None),
-            "is_verified": getattr(user, 'is_verified', False)
+            "is_verified": getattr(user, 'is_verified', False),
+            "subscription_price": getattr(user, 'subscribe_price', 0),
+            "promotions": getattr(user, 'promotions', [])
         }
     
     except Exception as e:
@@ -308,7 +293,8 @@ async def get_user(username: str = Path(...), authed_instance=Depends(require_au
 async def get_user_posts(
     username: str = Path(...),
     limit: int = Query(50, ge=1, le=100),
-    offset: int = Query(0, ge=0),
+    label: str = Query("", description="Filter by label: archived, private_archived"),
+    after_date: float | None = Query(None, description="Unix timestamp to get posts after"),
     authed_instance=Depends(require_auth)
 ):
     try:
@@ -316,29 +302,82 @@ async def get_user_posts(
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
-        posts = await user.get_posts(limit=limit, offset=offset)
+        posts = await user.get_posts(limit=limit, label=label, after_date=after_date)
         
         posts_data = []
         for post in posts:
-            post_dict = {
-                "id": post.id,
-                "text": post.text,
-                "price": getattr(post, 'price', 0),
-                "created_at": post.created_at.isoformat() if hasattr(post, 'created_at') else None,
-                "likes_count": getattr(post, 'likes_count', 0),
-                "comments_count": getattr(post, 'comments_count', 0),
-                "is_pinned": getattr(post, 'is_pinned', False),
-                "media": []
-            }
+            # Handle both dict and PostModel objects
+            if isinstance(post, dict):
+                post_dict = {
+                    "id": post.get('id'),
+                    "text": post.get('text', ''),
+                    "raw_text": post.get('rawText', ''),
+                    "price": post.get('price', 0),
+                    "created_at": post.get('postedAt'),
+                    "likes_count": post.get('favoritesCount', 0),
+                    "comments_count": post.get('commentsCount', 0),
+                    "is_pinned": post.get('isPinned', False),
+                    "is_archived": post.get('isArchived', False),
+                    "is_deleted": post.get('isDeleted', False),
+                    "can_comment": post.get('canComment', True),
+                    "can_view_media": post.get('canViewMedia', True),
+                    "media_count": post.get('mediaCount', 0),
+                    "media": []
+                }
+                media_list = post.get('media', [])
+            else:
+                # PostModel object
+                post_dict = {
+                    "id": post.id,
+                    "text": post.text,
+                    "raw_text": getattr(post, 'rawText', ''),
+                    "price": getattr(post, 'price', 0),
+                    "created_at": post.created_at.isoformat() if hasattr(post, 'created_at') else None,
+                    "likes_count": getattr(post, 'favoritesCount', 0),
+                    "comments_count": getattr(post, 'commentsCount', 0),
+                    "is_pinned": getattr(post, 'isPinned', False),
+                    "is_archived": getattr(post, 'isArchived', False),
+                    "is_deleted": getattr(post, 'isDeleted', False),
+                    "can_comment": getattr(post, 'canComment', True),
+                    "can_view_media": getattr(post, 'canViewMedia', True),
+                    "media_count": getattr(post, 'media_count', 0),
+                    "media": []
+                }
+                media_list = getattr(post, 'media', [])
             
-            if hasattr(post, 'media') and post.media:
-                for media in post.media:
-                    post_dict["media"].append({
-                        "id": media.id,
-                        "type": getattr(media, 'type', 'photo'),
-                        "url": getattr(media, 'url', None),
-                        "preview": getattr(media, 'preview', None)
-                    })
+            if media_list:
+                for media in media_list:
+                    if isinstance(media, dict):
+                        # Get URL using url_picker if available
+                        media_url = None
+                        if hasattr(post, 'url_picker') and media.get('canView', False):
+                            try:
+                                url_result = post.url_picker(media)
+                                if url_result:
+                                    media_url = url_result.geturl()
+                            except:
+                                pass
+                        
+                        post_dict["media"].append({
+                            "id": media.get('id'),
+                            "type": media.get('type', 'photo'),
+                            "url": media_url,
+                            "preview": media.get('preview'),
+                            "can_view": media.get('canView', False),
+                            "is_locked": media.get('isLocked', False),
+                            "has_error": media.get('hasError', False)
+                        })
+                    else:
+                        # Media is an object
+                        post_dict["media"].append({
+                            "id": getattr(media, 'id', None),
+                            "type": getattr(media, 'type', 'photo'),
+                            "url": getattr(media, 'url', None),
+                            "preview": getattr(media, 'preview', None),
+                            "can_view": getattr(media, 'canView', True),
+                            "is_locked": getattr(media, 'isLocked', False),
+                            "has_error": getattr(media, 'hasError', False)
+                        })
             
             posts_data.append(post_dict)
         
@@ -346,7 +385,8 @@ async def get_user_posts(
             "posts": posts_data,
             "count": len(posts_data),
             "limit": limit,
-            "offset": offset
+            "label": label,
+            "after_date": after_date
         }
     
     except Exception as e:
@@ -356,8 +396,9 @@ async def get_user_posts(
 @app.get("/api/user/{username}/messages")
 async def get_user_messages(
     username: str = Path(...),
-    limit: int = Query(50, ge=1, le=100),
-    offset: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    offset_id: int | None = Query(None, description="Message ID to start from"),
+    cutoff_id: int | None = Query(None, description="Message ID to stop at"),
     authed_instance=Depends(require_auth)
 ):
     try:
@@ -365,36 +406,180 @@ async def get_user_messages(
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
-        messages = await user.get_messages(limit=limit, offset=offset)
+        try:
+            messages = await user.get_messages(limit=limit, offset_id=offset_id, cutoff_id=cutoff_id)
+        except Exception as msg_error:
+            logger.error(f"Error getting messages: {msg_error}")
+            logger.exception("Full traceback:")
+            raise HTTPException(status_code=500, detail=f"Error retrieving messages: {str(msg_error)}")
         
         messages_data = []
-        for message in messages:
-            message_dict = {
-                "id": message.id,
-                "text": message.text,
-                "price": getattr(message, 'price', 0),
-                "created_at": message.created_at.isoformat() if hasattr(message, 'created_at') else None,
-                "is_read": getattr(message, 'is_read', False),
-                "is_from_user": getattr(message, 'is_from_user', False),
-                "media": []
-            }
+        if not messages:
+            logger.info(f"No messages found for user {username}")
+        
+        for i, message in enumerate(messages):
+            try:
+                # Debug logging (disabled)
+                # logger.debug(f"Processing message {i}: type={type(message)}")
+                
+                # Handle both MessageModel objects and dict responses
+                if isinstance(message, dict):
+                    # This shouldn't happen with MessageModel, but handle it just in case
+                    message_dict = {
+                        "id": message.get('id'),
+                        "text": message.get('text', ''),
+                        "price": message.get('price', 0),
+                        "price_dollars": message.get('price', 0) / 100 if message.get('price', 0) else 0,
+                        "is_free": message.get('isFree', True),
+                        "is_tip": message.get('isTip', False),
+                        "is_opened": message.get('isOpened', False),
+                        "is_new": message.get('isNew', False),
+                        "is_from_queue": message.get('isFromQueue', False),
+                        "created_at": message.get('created_at') or message.get('createdAt'),
+                        "changed_at": message.get('changedAt'),
+                        "media_count": message.get('mediaCount', 0),
+                        "preview_count": len(message.get('previews', [])),
+                        "is_liked": message.get('isLiked', False),
+                        "is_media_ready": message.get('isMediaReady', True),
+                        "can_purchase": message.get('canPurchase', False),
+                        "locked_text": message.get('lockedText', False),
+                        "response_type": message.get('responseType', 'message'),
+                        "author": message.get('fromUser', {}),
+                        "media": []
+                    }
+                    
+                    media_list = message.get('media', [])
+                    if media_list:
+                        for media in media_list:
+                            message_dict["media"].append({
+                                "id": media.get('id'),
+                                "type": media.get('type', 'photo'),
+                                "url": media.get('url') or media.get('src'),
+                                "preview": media.get('preview'),
+                                "can_view": media.get('canView', True),
+                                "status": "viewable" if media.get('canView', True) else "locked"
+                            })
+                else:
+                    # Handle MessageModel objects
+                    message_dict = {
+                        "id": message.id,
+                        "text": message.text,
+                        "price": getattr(message, 'price', 0),
+                        "price_dollars": getattr(message, 'price', 0) / 100 if getattr(message, 'price', 0) else 0,
+                        "is_free": getattr(message, 'isFree', True),
+                        "is_tip": getattr(message, 'isTip', False),
+                        "is_opened": getattr(message, 'isOpened', False),
+                        "is_new": getattr(message, 'isNew', False),
+                        "is_from_queue": getattr(message, 'is_from_queue', False),
+                        "created_at": message.created_at.isoformat() if hasattr(message, 'created_at') else None,
+                        "changed_at": getattr(message, 'changedAt', None),
+                        "media_count": getattr(message, 'media_count', 0),
+                        "preview_count": len(getattr(message, 'previews', [])),
+                        "is_liked": getattr(message, 'isLiked', False),
+                        "is_media_ready": getattr(message, 'isMediaReady', True),
+                        "can_purchase": getattr(message, 'canPurchase', False),
+                        "locked_text": getattr(message, 'lockedText', False),
+                        "response_type": getattr(message, 'responseType', 'message'),
+                        "author": {
+                            "id": message.author.id if hasattr(message, 'author') else message.user.id,
+                            "username": message.author.username if hasattr(message, 'author') else message.user.username,
+                            "name": message.author.name if hasattr(message, 'author') else message.user.name
+                        },
+                        "media": []
+                    }
+                    
+                    if hasattr(message, 'media') and message.media:
+                        for media in message.media:
+                            # Media items in MessageModel are dictionaries, not objects
+                            if isinstance(media, dict):
+                                # Get the actual URL using url_picker
+                                media_url = None
+                                preview_url = None
+                                can_view = media.get('canView', True)
+                                
+                                if can_view and hasattr(message, 'url_picker'):
+                                    try:
+                                        url_result = message.url_picker(media)
+                                        if url_result:
+                                            media_url = url_result.geturl()
+                                    except Exception as e:
+                                        logger.error(f"Error getting URL with url_picker: {e}")
+                                
+                                # Try to get preview URL
+                                if hasattr(message, 'preview_url_picker'):
+                                    try:
+                                        preview_result = message.preview_url_picker(media)
+                                        if preview_result:
+                                            preview_url = preview_result if isinstance(preview_result, str) else preview_result.geturl()
+                                    except:
+                                        pass
+                                
+                                message_dict["media"].append({
+                                    "id": media.get('id'),
+                                    "type": media.get('type', 'photo'),
+                                    "url": media_url,
+                                    "preview": preview_url,
+                                    "thumb": media.get('thumb'),
+                                    "source": media.get('source'),
+                                    "duration": media.get('duration', 0),
+                                    "can_view": can_view,
+                                    "has_error": media.get('hasError', False),
+                                    "is_locked": media.get('isLocked', False),
+                                    "status": "viewable" if can_view else "locked"
+                                })
+                            else:
+                                # In case media is an object
+                                message_dict["media"].append({
+                                    "id": getattr(media, 'id', None),
+                                    "type": getattr(media, 'type', 'photo'),
+                                    "url": getattr(media, 'url', None),
+                                    "preview": getattr(media, 'preview', None),
+                                    "can_view": True,
+                                    "status": "viewable"
+                                })
             
-            if hasattr(message, 'media') and message.media:
-                for media in message.media:
-                    message_dict["media"].append({
-                        "id": media.id,
-                        "type": getattr(media, 'type', 'photo'),
-                        "url": getattr(media, 'url', None),
-                        "preview": getattr(media, 'preview', None)
-                    })
-            
-            messages_data.append(message_dict)
+                # Add media_status if message has media
+                if message_dict["media"]:
+                    locked_count = sum(1 for m in message_dict["media"] if not m.get("can_view", True))
+                    if locked_count == 0:
+                        message_dict["media_status"] = "all_viewable"
+                    elif locked_count == len(message_dict["media"]):
+                        message_dict["media_status"] = "all_locked"
+                    else:
+                        message_dict["media_status"] = "some_viewable"
+                
+                messages_data.append(message_dict)
+            except Exception as e:
+                logger.error(f"Error processing message {i}: {e}")
+                logger.error(f"Message type: {type(message)}")
+                logger.error(f"Message content: {message}")
+                raise
+        
+        # Calculate statistics
+        ppv_messages = sum(1 for msg in messages_data if msg.get('price', 0) > 0)
+        locked_media_items = sum(
+            sum(1 for media in msg.get('media', []) if not media.get('can_view', True))
+            for msg in messages_data
+        )
+        viewable_media_items = sum(
+            sum(1 for media in msg.get('media', []) if media.get('can_view', True))
+            for msg in messages_data
+        )
         
         return {
-            "messages": messages_data,
-            "count": len(messages_data),
-            "limit": limit,
-            "offset": offset
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "name": user.name
+            },
+            "fetch_date": datetime.now().isoformat(),
+            "total_messages": len(messages_data),
+            "statistics": {
+                "ppv_messages": ppv_messages,
+                "locked_media_items": locked_media_items,
+                "viewable_media_items": viewable_media_items
+            },
+            "messages": messages_data
         }
     
     except Exception as e:
@@ -461,575 +646,6 @@ async def get_user_highlights(username: str = Path(...), authed_instance=Depends
         logger.error(f"Get user highlights error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# Subscription and Social Endpoints
-@app.get("/api/subscriptions")
-async def get_subscriptions(
-    limit: int = Query(50, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        subscriptions = await authed_instance.get_subscriptions(limit=limit, offset=offset)
-        
-        subscriptions_data = []
-        for subscription in subscriptions:
-            subscriptions_data.append({
-                "id": subscription.id,
-                "username": subscription.username,
-                "name": getattr(subscription, 'name', None),
-                "avatar": getattr(subscription, 'avatar', None),
-                "subscription_price": getattr(subscription, 'subscription_price', 0),
-                "is_active": getattr(subscription, 'is_active', False)
-            })
-        
-        return {
-            "subscriptions": subscriptions_data,
-            "count": len(subscriptions_data),
-            "limit": limit,
-            "offset": offset
-        }
-    
-    except Exception as e:
-        logger.error(f"Get subscriptions error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/chats")
-async def get_chats(
-    limit: int = Query(50, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        chats = await authed_instance.get_chats(limit=limit, offset=offset)
-        
-        chats_data = []
-        for chat in chats:
-            chats_data.append({
-                "id": chat.id,
-                "username": chat.username,
-                "name": getattr(chat, 'name', None),
-                "avatar": getattr(chat, 'avatar', None),
-                "last_message": getattr(chat, 'last_message', None),
-                "unread_count": getattr(chat, 'unread_count', 0)
-            })
-        
-        return {
-            "chats": chats_data,
-            "count": len(chats_data),
-            "limit": limit,
-            "offset": offset
-        }
-    
-    except Exception as e:
-        logger.error(f"Get chats error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Interaction Endpoints
-@app.post("/api/user/{username}/message")
-async def send_message(
-    username: str = Path(...),
-    request: MessageRequest = Body(...),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        user = await authed_instance.get_user(username)
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        
-        message = await user.send_message(
-            text=request.text,
-            media_ids=request.media_ids
-        )
-        
-        return {
-            "success": True,
-            "message_id": message.id,
-            "text": message.text,
-            "created_at": message.created_at.isoformat() if hasattr(message, 'created_at') else None
-        }
-    
-    except Exception as e:
-        logger.error(f"Send message error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/api/post/{post_id}/like")
-async def like_post(post_id: int = Path(...), authed_instance=Depends(require_auth)):
-    try:
-        result = await authed_instance.like_post(post_id)
-        return {"success": True, "liked": True}
-    
-    except Exception as e:
-        logger.error(f"Like post error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.delete("/api/post/{post_id}/like")
-async def unlike_post(post_id: int = Path(...), authed_instance=Depends(require_auth)):
-    try:
-        result = await authed_instance.unlike_post(post_id)
-        return {"success": True, "liked": False}
-    
-    except Exception as e:
-        logger.error(f"Unlike post error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/api/user/{username}/tip")
-async def send_tip(
-    username: str = Path(...),
-    request: TipRequest = Body(...),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        user = await authed_instance.get_user(username)
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        
-        tip = await user.send_tip(
-            amount=request.amount,
-            message=request.message
-        )
-        
-        return {
-            "success": True,
-            "tip_id": tip.id,
-            "amount": request.amount,
-            "message": request.message
-        }
-    
-    except Exception as e:
-        logger.error(f"Send tip error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Content Creation Endpoints
-@app.post("/api/posts")
-async def create_post(
-    request: PostRequest = Body(...),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        post = await authed_instance.create_post(
-            text=request.text,
-            media_ids=request.media_ids,
-            price=request.price
-        )
-        
-        return {
-            "success": True,
-            "post_id": post.id,
-            "text": post.text,
-            "price": request.price,
-            "created_at": post.created_at.isoformat() if hasattr(post, 'created_at') else None
-        }
-    
-    except Exception as e:
-        logger.error(f"Create post error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.put("/api/post/{post_id}")
-async def edit_post(
-    post_id: int = Path(...),
-    request: PostRequest = Body(...),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        post = await authed_instance.edit_post(
-            post_id=post_id,
-            text=request.text,
-            price=request.price
-        )
-        
-        return {
-            "success": True,
-            "post_id": post_id,
-            "text": request.text,
-            "price": request.price
-        }
-    
-    except Exception as e:
-        logger.error(f"Edit post error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.delete("/api/post/{post_id}")
-async def delete_post(post_id: int = Path(...), authed_instance=Depends(require_auth)):
-    try:
-        await authed_instance.delete_post(post_id)
-        return {"success": True, "message": "Post deleted successfully"}
-    
-    except Exception as e:
-        logger.error(f"Delete post error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Analytics and Financial Endpoints
-@app.get("/api/earnings")
-async def get_earnings(
-    start_date: Optional[str] = Query(None),
-    end_date: Optional[str] = Query(None),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        earnings = await authed_instance.get_earnings(
-            start_date=start_date,
-            end_date=end_date
-        )
-        
-        return {
-            "total_earnings": getattr(earnings, 'total', 0),
-            "subscriptions": getattr(earnings, 'subscriptions', 0),
-            "tips": getattr(earnings, 'tips', 0),
-            "posts": getattr(earnings, 'posts', 0),
-            "messages": getattr(earnings, 'messages', 0),
-            "period": {
-                "start_date": start_date,
-                "end_date": end_date
-            }
-        }
-    
-    except Exception as e:
-        logger.error(f"Get earnings error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/analytics")
-async def get_analytics(
-    start_date: Optional[str] = Query(None),
-    end_date: Optional[str] = Query(None),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        analytics = await authed_instance.get_analytics(
-            start_date=start_date,
-            end_date=end_date
-        )
-        
-        return {
-            "profile_views": getattr(analytics, 'profile_views', 0),
-            "new_subscribers": getattr(analytics, 'new_subscribers', 0),
-            "likes_received": getattr(analytics, 'likes_received', 0),
-            "messages_sent": getattr(analytics, 'messages_sent', 0),
-            "posts_created": getattr(analytics, 'posts_created', 0),
-            "period": {
-                "start_date": start_date,
-                "end_date": end_date
-            }
-        }
-    
-    except Exception as e:
-        logger.error(f"Get analytics error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Fan Management Endpoints
-@app.get("/api/fans")
-async def get_fans(
-    limit: int = Query(50, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        fans = await authed_instance.get_fans(limit=limit, offset=offset)
-        
-        fans_data = []
-        for fan in fans:
-            fans_data.append({
-                "id": fan.id,
-                "username": fan.username,
-                "name": getattr(fan, 'name', None),
-                "avatar": getattr(fan, 'avatar', None),
-                "subscription_date": getattr(fan, 'subscription_date', None),
-                "total_spent": getattr(fan, 'total_spent', 0)
-            })
-        
-        return {
-            "fans": fans_data,
-            "count": len(fans_data),
-            "limit": limit,
-            "offset": offset
-        }
-    
-    except Exception as e:
-        logger.error(f"Get fans error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/following")
-async def get_following(
-    limit: int = Query(50, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        following = await authed_instance.get_following(limit=limit, offset=offset)
-        
-        following_data = []
-        for user in following:
-            following_data.append({
-                "id": user.id,
-                "username": user.username,
-                "name": getattr(user, 'name', None),
-                "avatar": getattr(user, 'avatar', None),
-                "subscription_price": getattr(user, 'subscription_price', 0)
-            })
-        
-        return {
-            "following": following_data,
-            "count": len(following_data),
-            "limit": limit,
-            "offset": offset
-        }
-    
-    except Exception as e:
-        logger.error(f"Get following error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# User Management Endpoints
-@app.post("/api/user/{user_id}/block")
-async def block_user(user_id: int = Path(...), authed_instance=Depends(require_auth)):
-    try:
-        await authed_instance.block_user(user_id)
-        return {"success": True, "message": "User blocked successfully"}
-    
-    except Exception as e:
-        logger.error(f"Block user error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.delete("/api/user/{user_id}/block")
-async def unblock_user(user_id: int = Path(...), authed_instance=Depends(require_auth)):
-    try:
-        await authed_instance.unblock_user(user_id)
-        return {"success": True, "message": "User unblocked successfully"}
-    
-    except Exception as e:
-        logger.error(f"Unblock user error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/blocked-users")
-async def get_blocked_users(authed_instance=Depends(require_auth)):
-    try:
-        blocked_users = await authed_instance.get_blocked_users()
-        
-        blocked_data = []
-        for user in blocked_users:
-            blocked_data.append({
-                "id": user.id,
-                "username": user.username,
-                "name": getattr(user, 'name', None),
-                "avatar": getattr(user, 'avatar', None)
-            })
-        
-        return {"blocked_users": blocked_data}
-    
-    except Exception as e:
-        logger.error(f"Get blocked users error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Profile Management Endpoints
-@app.put("/api/profile")
-async def update_profile(
-    request: ProfileUpdateRequest = Body(...),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        profile = await authed_instance.set_profile_info(
-            name=request.name,
-            bio=request.bio,
-            location=request.location
-        )
-        
-        return {
-            "success": True,
-            "message": "Profile updated successfully",
-            "profile": {
-                "name": request.name,
-                "bio": request.bio,
-                "location": request.location
-            }
-        }
-    
-    except Exception as e:
-        logger.error(f"Update profile error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.put("/api/subscription-price")
-async def set_subscription_price(
-    request: SubscriptionPriceRequest = Body(...),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        await authed_instance.set_subscription_price(request.price)
-        return {
-            "success": True,
-            "message": "Subscription price updated successfully",
-            "price": request.price
-        }
-    
-    except Exception as e:
-        logger.error(f"Set subscription price error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Notifications Endpoint
-@app.get("/api/notifications")
-async def get_notifications(
-    limit: int = Query(50, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        notifications = await authed_instance.get_notifications(limit=limit, offset=offset)
-        
-        notifications_data = []
-        for notification in notifications:
-            notifications_data.append({
-                "id": notification.id,
-                "type": getattr(notification, 'type', ''),
-                "message": getattr(notification, 'message', ''),
-                "is_read": getattr(notification, 'is_read', False),
-                "created_at": notification.created_at.isoformat() if hasattr(notification, 'created_at') else None
-            })
-        
-        return {
-            "notifications": notifications_data,
-            "count": len(notifications_data),
-            "limit": limit,
-            "offset": offset
-        }
-    
-    except Exception as e:
-        logger.error(f"Get notifications error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Vault Endpoints
-@app.get("/api/vault")
-async def get_vault_media(
-    limit: int = Query(50, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        vault_media = await authed_instance.get_vault_media(limit=limit, offset=offset)
-        
-        vault_data = []
-        for media in vault_media:
-            vault_data.append({
-                "id": media.id,
-                "type": getattr(media, 'type', 'photo'),
-                "url": getattr(media, 'url', None),
-                "preview": getattr(media, 'preview', None),
-                "created_at": media.created_at.isoformat() if hasattr(media, 'created_at') else None
-            })
-        
-        return {
-            "vault_media": vault_data,
-            "count": len(vault_data),
-            "limit": limit,
-            "offset": offset
-        }
-    
-    except Exception as e:
-        logger.error(f"Get vault media error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Promotions Endpoints
-@app.get("/api/promotions")
-async def get_promotions(authed_instance=Depends(require_auth)):
-    try:
-        promotions = await authed_instance.get_promotions()
-        
-        promotions_data = []
-        for promotion in promotions:
-            promotions_data.append({
-                "id": promotion.id,
-                "discount": getattr(promotion, 'discount', 0),
-                "duration": getattr(promotion, 'duration', 0),
-                "is_active": getattr(promotion, 'is_active', False),
-                "created_at": promotion.created_at.isoformat() if hasattr(promotion, 'created_at') else None
-            })
-        
-        return {"promotions": promotions_data}
-    
-    except Exception as e:
-        logger.error(f"Get promotions error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/api/promotions")
-async def create_promotion(
-    request: PromotionRequest = Body(...),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        promotion = await authed_instance.create_promotion(
-            discount=request.discount,
-            duration=request.duration
-        )
-        
-        return {
-            "success": True,
-            "promotion_id": promotion.id,
-            "discount": request.discount,
-            "duration": request.duration
-        }
-    
-    except Exception as e:
-        logger.error(f"Create promotion error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Tips Endpoint
-@app.get("/api/tips")
-async def get_tips(
-    limit: int = Query(50, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        tips = await authed_instance.get_tips(limit=limit, offset=offset)
-        
-        tips_data = []
-        for tip in tips:
-            tips_data.append({
-                "id": tip.id,
-                "amount": getattr(tip, 'amount', 0),
-                "message": getattr(tip, 'message', ''),
-                "from_user": getattr(tip, 'from_user', {}),
-                "created_at": tip.created_at.isoformat() if hasattr(tip, 'created_at') else None
-            })
-        
-        return {
-            "tips": tips_data,
-            "count": len(tips_data),
-            "limit": limit,
-            "offset": offset
-        }
-    
-    except Exception as e:
-        logger.error(f"Get tips error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Mass Messages Endpoints
-@app.get("/api/mass-messages")
-async def get_mass_messages(
-    limit: int = Query(50, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-    authed_instance=Depends(require_auth)
-):
-    try:
-        mass_messages = await authed_instance.get_mass_messages(limit=limit, offset=offset)
-        
-        mass_messages_data = []
-        for message in mass_messages:
-            mass_messages_data.append({
-                "id": message.id,
-                "text": getattr(message, 'text', ''),
-                "price": getattr(message, 'price', 0),
-                "created_at": message.created_at.isoformat() if hasattr(message, 'created_at') else None,
-                "media": []
-            })
-        
-        return {
-            "mass_messages": mass_messages_data,
-            "count": len(mass_messages_data),
-            "limit": limit,
-            "offset": offset
-        }
-    
-    except Exception as e:
-        logger.error(f"Get mass messages error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
 @app.get("/api/user/{username}/mass-messages")
 async def get_user_mass_messages(
     username: str = Path(...),
@@ -1059,22 +675,6 @@ async def get_user_mass_messages(
         logger.error(f"Get user mass messages error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# Transactions Endpoint
-@app.get("/api/transactions")
-async def get_transactions(authed_instance=Depends(require_auth)):
-    try:
-        transactions = await authed_instance.get_transactions()
-        
-        return {
-            "transactions": transactions,
-            "count": len(transactions) if isinstance(transactions, list) else 0
-        }
-    
-    except Exception as e:
-        logger.error(f"Get transactions error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Archived Stories Endpoint
 @app.get("/api/user/{username}/archived-stories")
 async def get_archived_stories(
     username: str = Path(...),
@@ -1120,7 +720,6 @@ async def get_archived_stories(
         logger.error(f"Get archived stories error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# Socials Endpoints
 @app.get("/api/user/{username}/socials")
 async def get_user_socials(username: str = Path(...), authed_instance=Depends(require_auth)):
     try:
@@ -1136,7 +735,977 @@ async def get_user_socials(username: str = Path(...), authed_instance=Depends(re
         logger.error(f"Get user socials error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# Paid Content Endpoints
+# Subscription and Social Endpoints
+@app.get("/api/subscriptions")
+async def get_subscriptions(
+    limit: int = Query(50, ge=1, le=100),
+    sub_type: str = Query("all", description="Type of subscriptions (all, active, expired, attention)"),
+    filter_by: str = Query("", description="Filter subscriptions by specific value"),
+    authed_instance=Depends(require_auth)
+):
+    try:
+        subscriptions = await authed_instance.get_subscriptions(limit=limit, sub_type=sub_type, filter_by=filter_by)
+        
+        subscriptions_data = []
+        for subscription in subscriptions:
+            try:
+                # Check if subscription has user attribute (SubscriptionModel)
+                if hasattr(subscription, 'user') and subscription.user:
+                    user = subscription.user
+                    subscription_data = {
+                        "id": user.id,
+                        "username": user.username,
+                        "name": user.name,
+                        "avatar": getattr(user, 'avatar', None),
+                        "subscription_price": subscription.subscribe_price if hasattr(subscription, 'subscribe_price') else 0,
+                        "is_active": subscription.is_active() if hasattr(subscription, 'is_active') and callable(subscription.is_active) else subscription.active,
+                        "expire_date": subscription.subscribed_by_expire_date.isoformat() if hasattr(subscription, 'subscribed_by_expire_date') else None,
+                        "current_price": subscription.current_subscribe_price if hasattr(subscription, 'current_subscribe_price') else 0
+                    }
+                else:
+                    # Fallback for other subscription formats
+                    subscription_data = {
+                        "id": getattr(subscription, 'id', None),
+                        "username": getattr(subscription, 'username', None),
+                        "name": getattr(subscription, 'name', None),
+                        "avatar": getattr(subscription, 'avatar', None),
+                        "subscription_price": getattr(subscription, 'subscription_price', 0),
+                        "is_active": getattr(subscription, 'is_active', False)
+                    }
+                subscriptions_data.append(subscription_data)
+            except Exception as e:
+                logger.error(f"Error processing subscription: {e}")
+                logger.error(f"Subscription type: {type(subscription)}")
+                continue
+        
+        return {
+            "subscriptions": subscriptions_data,
+            "count": len(subscriptions_data),
+            "limit": limit,
+            "sub_type": sub_type,
+            "filter_by": filter_by
+        }
+    
+    except Exception as e:
+        logger.error(f"Get subscriptions error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/messages/all/detailed")
+async def get_all_messages_detailed(
+    limit_per_chat: int = Query(100, ge=1, le=200, description="Max messages per chat"),
+    include_purchases: bool = Query(True, description="Include PPV purchases"),
+    include_tips: bool = Query(True, description="Include tip messages"),
+    only_with_media: bool = Query(False, description="Only messages with media"),
+    authed_instance=Depends(require_auth)
+):
+    """
+    Get all messages from all chats with detailed statistics and filtering
+    """
+    try:
+        logger.info("Fetching detailed messages from all chats")
+        
+        # First get all chats
+        chats = await authed_instance.get_chats(limit=200, offset=0)
+        
+        all_messages = []
+        chat_details = {}
+        statistics = {
+            "total_messages": 0,
+            "total_chats": 0,
+            "ppv_messages": 0,
+            "tip_messages": 0,
+            "free_messages": 0,
+            "messages_with_media": 0,
+            "total_spent": 0
+        }
+        
+        for chat in chats:
+            try:
+                # Get user info from chat
+                if hasattr(chat, 'user') and chat.user:
+                    user = chat.user
+                    user_id = user.id
+                    username = user.username
+                    name = user.name
+                    
+                    logger.info(f"Processing chat with {username}")
+                    
+                    # Initialize chat details
+                    if username not in chat_details:
+                        chat_details[username] = {
+                            "user_id": user_id,
+                            "username": username,
+                            "name": name,
+                            "message_count": 0,
+                            "ppv_count": 0,
+                            "tip_count": 0,
+                            "media_count": 0,
+                            "total_spent": 0,
+                            "last_message_date": None,
+                            "first_message_date": None
+                        }
+                    
+                    # Get messages for this user
+                    messages = await user.get_messages(limit=limit_per_chat)
+                    
+                    for message in messages:
+                        try:
+                            # Handle both dict and MessageModel objects
+                            if isinstance(message, dict):
+                                message_data = message
+                            else:
+                                # Convert MessageModel to dict-like structure
+                                message_data = {
+                                    "id": message.id,
+                                    "text": message.text,
+                                    "price": message.price if hasattr(message, 'price') else 0,
+                                    "isFree": message.isFree if hasattr(message, 'isFree') else True,
+                                    "isTip": message.isTip if hasattr(message, 'isTip') else False,
+                                    "isOpened": message.isOpened if hasattr(message, 'isOpened') else True,
+                                    "isNew": message.isNew if hasattr(message, 'isNew') else False,
+                                    "media_count": message.media_count if hasattr(message, 'media_count') else 0,
+                                    "created_at": message.created_at if hasattr(message, 'created_at') else None,
+                                    "author": message.author if hasattr(message, 'author') else None,
+                                    "media": message.media if hasattr(message, 'media') else []
+                                }
+                            
+                            # Apply filters
+                            price = message_data.get('price', 0) or 0
+                            is_tip = message_data.get('isTip', False)
+                            is_free = message_data.get('isFree', True)
+                            media_count = message_data.get('media_count', 0)
+                            
+                            # Skip based on filters
+                            if not include_purchases and price > 0 and not is_tip:
+                                continue
+                            if not include_tips and is_tip:
+                                continue
+                            if only_with_media and media_count == 0:
+                                continue
+                            
+                            # Build message dict
+                            message_dict = {
+                                "id": message_data.get('id'),
+                                "text": message_data.get('text', ''),
+                                "price": price,
+                                "price_dollars": price / 100 if price else 0,
+                                "is_free": is_free,
+                                "is_tip": is_tip,
+                                "is_opened": message_data.get('isOpened', True),
+                                "is_new": message_data.get('isNew', False),
+                                "media_count": media_count,
+                                "created_at": None,
+                                "chat_user": {
+                                    "id": user_id,
+                                    "username": username,
+                                    "name": name
+                                }
+                            }
+                            
+                            # Handle created_at
+                            if message_data.get('created_at'):
+                                if hasattr(message_data['created_at'], 'isoformat'):
+                                    message_dict["created_at"] = message_data['created_at'].isoformat()
+                                else:
+                                    message_dict["created_at"] = str(message_data['created_at'])
+                            
+                            # Handle author
+                            if message_data.get('author'):
+                                author = message_data['author']
+                                if hasattr(author, 'id'):
+                                    message_dict["author"] = {
+                                        "id": author.id,
+                                        "username": author.username if hasattr(author, 'username') else None
+                                    }
+                                    message_dict["is_from_me"] = (author.id == authed_instance.id)
+                                else:
+                                    message_dict["is_from_me"] = False
+                            
+                            # Handle media with url_picker
+                            if message_data.get('media') and hasattr(message, 'url_picker'):
+                                message_dict["media"] = []
+                                for media in message_data['media']:
+                                    if isinstance(media, dict):
+                                        media_url = None
+                                        if media.get('canView', False):
+                                            try:
+                                                url_result = message.url_picker(media)
+                                                if url_result:
+                                                    media_url = url_result.geturl()
+                                            except:
+                                                pass
+                                        
+                                        message_dict["media"].append({
+                                            "id": media.get('id'),
+                                            "type": media.get('type', 'photo'),
+                                            "url": media_url,
+                                            "can_view": media.get('canView', False),
+                                            "is_locked": media.get('isLocked', False)
+                                        })
+                            
+                            # Update statistics
+                            statistics["total_messages"] += 1
+                            if price > 0:
+                                if is_tip:
+                                    statistics["tip_messages"] += 1
+                                else:
+                                    statistics["ppv_messages"] += 1
+                                statistics["total_spent"] += price
+                            else:
+                                statistics["free_messages"] += 1
+                            
+                            if media_count > 0:
+                                statistics["messages_with_media"] += 1
+                            
+                            # Update chat details
+                            chat_details[username]["message_count"] += 1
+                            if price > 0:
+                                chat_details[username]["total_spent"] += price
+                                if is_tip:
+                                    chat_details[username]["tip_count"] += 1
+                                else:
+                                    chat_details[username]["ppv_count"] += 1
+                            
+                            if media_count > 0:
+                                chat_details[username]["media_count"] += 1
+                            
+                            # Track dates
+                            if message_dict["created_at"]:
+                                if not chat_details[username]["last_message_date"] or message_dict["created_at"] > chat_details[username]["last_message_date"]:
+                                    chat_details[username]["last_message_date"] = message_dict["created_at"]
+                                if not chat_details[username]["first_message_date"] or message_dict["created_at"] < chat_details[username]["first_message_date"]:
+                                    chat_details[username]["first_message_date"] = message_dict["created_at"]
+                            
+                            all_messages.append(message_dict)
+                            
+                        except Exception as e:
+                            logger.error(f"Error processing message: {e}")
+                            continue
+                    
+            except Exception as e:
+                logger.error(f"Error processing chat: {e}")
+                continue
+        
+        # Sort messages by created_at (newest first)
+        all_messages.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+        
+        # Convert chat_details to list and sort by message count
+        chat_list = list(chat_details.values())
+        chat_list.sort(key=lambda x: x['message_count'], reverse=True)
+        
+        statistics["total_chats"] = len(chat_list)
+        statistics["total_spent_dollars"] = statistics["total_spent"] / 100
+        
+        return {
+            "statistics": statistics,
+            "chats": chat_list,
+            "messages": all_messages
+        }
+    
+    except Exception as e:
+        logger.error(f"Get all messages detailed error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/messages/all")
+async def get_all_messages(
+    limit_per_chat: int = Query(50, ge=1, le=100, description="Max messages per chat"),
+    include_purchases: bool = Query(True, description="Include PPV purchases"),
+    authed_instance=Depends(require_auth)
+):
+    """
+    Get all messages from all chats
+    """
+    try:
+        logger.info("Fetching all messages from all chats")
+        
+        # First get all chats
+        chats = await authed_instance.get_chats(limit=100, offset=0)
+        
+        all_messages = []
+        chat_summaries = []
+        total_message_count = 0
+        
+        for chat in chats:
+            try:
+                # Get user info from chat
+                if hasattr(chat, 'user') and chat.user:
+                    user = chat.user
+                    user_id = user.id
+                    username = user.username
+                    name = user.name
+                    
+                    logger.info(f"Fetching messages from chat with {username}")
+                    
+                    # Get messages for this user
+                    messages = await user.get_messages(limit=limit_per_chat)
+                    
+                    chat_message_count = 0
+                    
+                    for message in messages:
+                        # Process each message similar to the messages endpoint
+                        try:
+                            # Handle both dict and MessageModel objects
+                            if isinstance(message, dict):
+                                message_dict = {
+                                    "id": message.get('id'),
+                                    "text": message.get('text', ''),
+                                    "price": message.get('price', 0),
+                                    "is_free": message.get('isFree', True),
+                                    "is_tip": message.get('isTip', False),
+                                    "created_at": message.get('createdAt'),
+                                    "chat_user": {
+                                        "id": user_id,
+                                        "username": username,
+                                        "name": name
+                                    }
+                                }
+                            else:
+                                # MessageModel object
+                                message_dict = {
+                                    "id": message.id,
+                                    "text": message.text,
+                                    "price": message.price if hasattr(message, 'price') else 0,
+                                    "is_free": message.isFree if hasattr(message, 'isFree') else True,
+                                    "is_tip": message.isTip if hasattr(message, 'isTip') else False,
+                                    "is_opened": message.isOpened if hasattr(message, 'isOpened') else True,
+                                    "is_new": message.isNew if hasattr(message, 'isNew') else False,
+                                    "created_at": message.created_at.isoformat() if hasattr(message, 'created_at') and message.created_at else None,
+                                    "chat_user": {
+                                        "id": user_id,
+                                        "username": username,
+                                        "name": name
+                                    },
+                                    "author": {
+                                        "id": message.author.id if hasattr(message, 'author') else None,
+                                        "username": message.author.username if hasattr(message, 'author') else None,
+                                    },
+                                    "media_count": message.media_count if hasattr(message, 'media_count') else 0
+                                }
+                                
+                                # Add media if available
+                                if hasattr(message, 'media') and message.media:
+                                    message_dict["media"] = []
+                                    for media in message.media:
+                                        if isinstance(media, dict):
+                                            # Get URL using url_picker if available
+                                            media_url = None
+                                            if hasattr(message, 'url_picker') and media.get('canView', False):
+                                                try:
+                                                    url_result = message.url_picker(media)
+                                                    if url_result:
+                                                        media_url = url_result.geturl()
+                                                except:
+                                                    pass
+                                            
+                                            message_dict["media"].append({
+                                                "id": media.get('id'),
+                                                "type": media.get('type', 'photo'),
+                                                "url": media_url,
+                                                "can_view": media.get('canView', False)
+                                            })
+                            
+                            # Only include PPV messages if requested
+                            if not include_purchases and message_dict.get('price', 0) > 0:
+                                continue
+                                
+                            all_messages.append(message_dict)
+                            chat_message_count += 1
+                            
+                        except Exception as e:
+                            logger.error(f"Error processing message: {e}")
+                            continue
+                    
+                    # Add chat summary
+                    chat_summaries.append({
+                        "user_id": user_id,
+                        "username": username,
+                        "name": name,
+                        "message_count": chat_message_count
+                    })
+                    
+                    total_message_count += chat_message_count
+                    
+            except Exception as e:
+                logger.error(f"Error processing chat: {e}")
+                continue
+        
+        # Sort messages by created_at (newest first)
+        all_messages.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+        
+        return {
+            "total_messages": total_message_count,
+            "total_chats": len(chat_summaries),
+            "chat_summaries": chat_summaries,
+            "messages": all_messages
+        }
+    
+    except Exception as e:
+        logger.error(f"Get all messages error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/chats")
+async def get_chats(
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    authed_instance=Depends(require_auth)
+):
+    try:
+        chats = await authed_instance.get_chats(limit=limit, offset=offset)
+        
+        chats_data = []
+        for chat in chats:
+            try:
+                # ChatModel stores user info in the 'user' attribute
+                if hasattr(chat, 'user') and chat.user:
+                    user = chat.user
+                    chat_data = {
+                        "id": user.id,
+                        "username": user.username,
+                        "name": user.name,
+                        "avatar": getattr(user, 'avatar', None),
+                        "has_purchased_feed": chat.has_purchased_feed if hasattr(chat, 'has_purchased_feed') else False,
+                        "count_pinned_messages": chat.count_pinned_messages if hasattr(chat, 'count_pinned_messages') else 0,
+                        "last_read_message_id": chat.last_read_message_id if hasattr(chat, 'last_read_message_id') else None
+                    }
+                    
+                    # Add last message info if available
+                    if hasattr(chat, 'last_message') and chat.last_message:
+                        last_msg = chat.last_message
+                        chat_data["last_message"] = {
+                            "id": last_msg.id,
+                            "text": last_msg.text,
+                            "created_at": last_msg.created_at.isoformat() if hasattr(last_msg, 'created_at') else None,
+                            "is_from_user": last_msg.author.id == user.id if hasattr(last_msg, 'author') else False
+                        }
+                    else:
+                        chat_data["last_message"] = None
+                else:
+                    # Fallback for other chat formats
+                    chat_data = {
+                        "id": getattr(chat, 'id', None),
+                        "username": getattr(chat, 'username', None),
+                        "name": getattr(chat, 'name', None),
+                        "avatar": getattr(chat, 'avatar', None),
+                        "last_message": getattr(chat, 'last_message', None),
+                        "unread_count": getattr(chat, 'unread_count', 0)
+                    }
+                
+                chats_data.append(chat_data)
+            except Exception as e:
+                logger.error(f"Error processing chat: {e}")
+                logger.error(f"Chat type: {type(chat)}")
+                continue
+        
+        return {
+            "chats": chats_data,
+            "count": len(chats_data),
+            "limit": limit,
+            "offset": offset
+        }
+    
+    except Exception as e:
+        logger.error(f"Get chats error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/mass-messages")
+async def get_mass_messages(
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    authed_instance=Depends(require_auth)
+):
+    try:
+        mass_messages = await authed_instance.get_mass_message_stats(limit=limit, offset=offset)
+        
+        mass_messages_data = []
+        for message in mass_messages:
+            mass_messages_data.append({
+                "id": message.id,
+                "text": getattr(message, 'text', ''),
+                "price": getattr(message, 'price', 0),
+                "created_at": message.created_at.isoformat() if hasattr(message, 'created_at') else None,
+                "stats": {
+                    "sent_count": getattr(message, 'sent_count', 0),
+                    "opened_count": getattr(message, 'opened_count', 0),
+                    "revenue": getattr(message, 'revenue', 0)
+                }
+            })
+        
+        return {
+            "mass_messages": mass_messages_data,
+            "count": len(mass_messages_data),
+            "limit": limit,
+            "offset": offset
+        }
+    
+    except Exception as e:
+        logger.error(f"Get mass messages error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Messaging Endpoints
+@app.post("/api/messages/mass-send")
+async def mass_send_message(
+    request: MassMessageRequest,
+    test_mode: bool = Query(False, description="Test mode - only show who would receive the message"),
+    exclude_usernames: list[str] = Query([], description="Usernames to exclude from mass send"),
+    authed_instance=Depends(require_auth)
+):
+    """
+    Send a message to all chats at once
+    """
+    try:
+        logger.info(f"Mass sending message to all chats (test_mode={test_mode})")
+        
+        # Validate request
+        if not request.text and not request.media_ids:
+            raise HTTPException(status_code=400, detail="Either text or media_ids must be provided")
+        
+        # Get all chats
+        chats = await authed_instance.get_chats(limit=200, offset=0)
+        
+        results = {
+            "total_chats": 0,
+            "successful_sends": 0,
+            "failed_sends": 0,
+            "test_mode": test_mode,
+            "results": []
+        }
+        
+        for chat in chats:
+            try:
+                if hasattr(chat, 'user') and chat.user:
+                    user = chat.user
+                    username = user.username
+                    
+                    # Skip if username is in exclude list
+                    if username in exclude_usernames:
+                        results["results"].append({
+                            "username": username,
+                            "status": "skipped",
+                            "reason": "Username in exclude list"
+                        })
+                        continue
+                    
+                    results["total_chats"] += 1
+                    
+                    if test_mode:
+                        # In test mode, just show who would receive the message
+                        results["results"].append({
+                            "username": username,
+                            "user_id": user.id,
+                            "name": user.name,
+                            "status": "would_send",
+                            "message": {
+                                "text": request.text,
+                                "price": request.price,
+                                "media_ids": request.media_ids,
+                                "locked_text": request.locked_text
+                            }
+                        })
+                        results["successful_sends"] += 1
+                    else:
+                        # Actually send the message
+                        try:
+                            result = await user.send_message(
+                                text=request.text,
+                                price=request.price,
+                                media_ids=request.media_ids,
+                                locked_text=request.locked_text
+                            )
+                            
+                            if result:
+                                results["successful_sends"] += 1
+                                results["results"].append({
+                                    "username": username,
+                                    "user_id": user.id,
+                                    "status": "success",
+                                    "message_id": result.id if hasattr(result, 'id') else None
+                                })
+                            else:
+                                results["failed_sends"] += 1
+                                results["results"].append({
+                                    "username": username,
+                                    "user_id": user.id,
+                                    "status": "failed",
+                                    "reason": "No response from send_message"
+                                })
+                                
+                        except Exception as e:
+                            results["failed_sends"] += 1
+                            results["results"].append({
+                                "username": username,
+                                "user_id": user.id,
+                                "status": "failed",
+                                "error": str(e)
+                            })
+                            logger.error(f"Failed to send message to {username}: {e}")
+                    
+                    # Add small delay between sends to avoid rate limiting
+                    if not test_mode and results["total_chats"] < len(chats) - 1:
+                        await asyncio.sleep(0.5)
+                        
+            except Exception as e:
+                logger.error(f"Error processing chat: {e}")
+                results["failed_sends"] += 1
+                results["results"].append({
+                    "status": "failed",
+                    "error": f"Chat processing error: {str(e)}"
+                })
+        
+        # Add summary
+        results["summary"] = {
+            "total_recipients": results["total_chats"],
+            "successful": results["successful_sends"],
+            "failed": results["failed_sends"],
+            "excluded": len(exclude_usernames),
+            "success_rate": f"{(results['successful_sends'] / results['total_chats'] * 100):.1f}%" if results['total_chats'] > 0 else "0%"
+        }
+        
+        return results
+    
+    except Exception as e:
+        logger.error(f"Mass send message error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/messages/mass-send/filtered")
+async def mass_send_message_filtered(
+    request: MassMessageRequest,
+    only_subscribed: bool = Query(False, description="Only send to users you're subscribed to"),
+    only_active_chats: bool = Query(False, description="Only send to chats with recent activity"),
+    days_active: int = Query(30, description="Consider chats active if they have messages within X days"),
+    test_mode: bool = Query(True, description="Test mode - only show who would receive the message"),
+    exclude_usernames: list[str] = Query([], description="Usernames to exclude from mass send"),
+    authed_instance=Depends(require_auth)
+):
+    """
+    Send a message to filtered chats with more control
+    """
+    try:
+        logger.info(f"Mass sending filtered message (test_mode={test_mode})")
+        
+        # Validate request
+        if not request.text and not request.media_ids:
+            raise HTTPException(status_code=400, detail="Either text or media_ids must be provided")
+        
+        # Get all chats
+        chats = await authed_instance.get_chats(limit=200, offset=0)
+        
+        # Get subscriptions if filtering by subscribed
+        subscribed_users = set()
+        if only_subscribed:
+            subscriptions = await authed_instance.get_subscriptions(limit=200)
+            for sub in subscriptions:
+                if hasattr(sub, 'user') and sub.user:
+                    subscribed_users.add(sub.user.username)
+        
+        results = {
+            "total_chats": len(chats),
+            "filtered_chats": 0,
+            "successful_sends": 0,
+            "failed_sends": 0,
+            "test_mode": test_mode,
+            "filters_applied": {
+                "only_subscribed": only_subscribed,
+                "only_active_chats": only_active_chats,
+                "days_active": days_active if only_active_chats else None,
+                "excluded_usernames": exclude_usernames
+            },
+            "results": []
+        }
+        
+        # Calculate cutoff date for active chats
+        from datetime import datetime, timedelta
+        cutoff_date = datetime.now() - timedelta(days=days_active)
+        
+        for chat in chats:
+            try:
+                if hasattr(chat, 'user') and chat.user:
+                    user = chat.user
+                    username = user.username
+                    
+                    # Apply filters
+                    skip_reasons = []
+                    
+                    # Check exclude list
+                    if username in exclude_usernames:
+                        skip_reasons.append("Username in exclude list")
+                    
+                    # Check subscription filter
+                    if only_subscribed and username not in subscribed_users:
+                        skip_reasons.append("Not subscribed to user")
+                    
+                    # Check activity filter
+                    if only_active_chats and hasattr(chat, 'last_message') and chat.last_message:
+                        if hasattr(chat.last_message, 'created_at'):
+                            if chat.last_message.created_at < cutoff_date:
+                                skip_reasons.append(f"No activity in last {days_active} days")
+                    elif only_active_chats and not hasattr(chat, 'last_message'):
+                        skip_reasons.append("No message history")
+                    
+                    # Skip if any filters failed
+                    if skip_reasons:
+                        results["results"].append({
+                            "username": username,
+                            "status": "filtered_out",
+                            "reasons": skip_reasons
+                        })
+                        continue
+                    
+                    results["filtered_chats"] += 1
+                    
+                    if test_mode:
+                        # In test mode, show who would receive the message
+                        results["results"].append({
+                            "username": username,
+                            "user_id": user.id,
+                            "name": user.name,
+                            "status": "would_send",
+                            "last_activity": chat.last_message.created_at.isoformat() if hasattr(chat, 'last_message') and chat.last_message and hasattr(chat.last_message, 'created_at') else None,
+                            "is_subscribed": username in subscribed_users if only_subscribed else None,
+                            "message": {
+                                "text": request.text,
+                                "price": request.price,
+                                "media_ids": request.media_ids,
+                                "locked_text": request.locked_text
+                            }
+                        })
+                        results["successful_sends"] += 1
+                    else:
+                        # Actually send the message
+                        try:
+                            result = await user.send_message(
+                                text=request.text,
+                                price=request.price,
+                                media_ids=request.media_ids,
+                                locked_text=request.locked_text
+                            )
+                            
+                            if result:
+                                results["successful_sends"] += 1
+                                results["results"].append({
+                                    "username": username,
+                                    "user_id": user.id,
+                                    "status": "success",
+                                    "message_id": result.id if hasattr(result, 'id') else None
+                                })
+                            else:
+                                results["failed_sends"] += 1
+                                results["results"].append({
+                                    "username": username,
+                                    "user_id": user.id,
+                                    "status": "failed",
+                                    "reason": "No response from send_message"
+                                })
+                                
+                        except Exception as e:
+                            results["failed_sends"] += 1
+                            results["results"].append({
+                                "username": username,
+                                "user_id": user.id,
+                                "status": "failed",
+                                "error": str(e)
+                            })
+                            logger.error(f"Failed to send message to {username}: {e}")
+                        
+                        # Add delay between sends to avoid rate limiting
+                        if results["filtered_chats"] < len(chats):
+                            await asyncio.sleep(1)  # Longer delay for safety
+                            
+            except Exception as e:
+                logger.error(f"Error processing chat: {e}")
+                results["results"].append({
+                    "status": "failed",
+                    "error": f"Chat processing error: {str(e)}"
+                })
+        
+        # Add summary
+        results["summary"] = {
+            "total_chats_found": results["total_chats"],
+            "chats_after_filtering": results["filtered_chats"],
+            "successful": results["successful_sends"],
+            "failed": results["failed_sends"],
+            "filtered_out": results["total_chats"] - results["filtered_chats"],
+            "success_rate": f"{(results['successful_sends'] / results['filtered_chats'] * 100):.1f}%" if results['filtered_chats'] > 0 else "0%"
+        }
+        
+        return results
+    
+    except Exception as e:
+        logger.error(f"Mass send filtered message error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/user/{username}/message")
+async def send_message(
+    username: str = Path(...),
+    request: MessageRequest = Body(...),
+    authed_instance=Depends(require_auth)
+):
+    try:
+        user = await authed_instance.get_user(username)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        message = await user.send_message(
+            text=request.text,
+            media_ids=request.media_ids
+        )
+        
+        if not message:
+            raise HTTPException(status_code=400, detail="Failed to send message")
+        
+        return {
+            "success": True,
+            "message_id": message.id,
+            "text": message.text,
+            "created_at": message.created_at.isoformat() if hasattr(message, 'created_at') else None
+        }
+    
+    except Exception as e:
+        logger.error(f"Send message error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Interaction Endpoints
+@app.get("/api/post/{post_id}")
+async def get_post(post_id: int = Path(...), authed_instance=Depends(require_auth)):
+    """
+    Get a specific post by ID
+    """
+    try:
+        # Try to get the post
+        link = f"https://onlyfans.com/api2/v2/posts/{post_id}"
+        result = await authed_instance.session_manager.json_request(link)
+        
+        if isinstance(result, dict) and result.get('error'):
+            error_info = result.get('error', {})
+            error_code = error_info.get('code', 404)
+            error_message = error_info.get('message', 'Post not found')
+            raise HTTPException(status_code=error_code, detail=error_message)
+        
+        return {
+            "post": result,
+            "found": True
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get post error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/post/{post_id}/like")
+async def like_post(post_id: int = Path(...), authed_instance=Depends(require_auth)):
+    try:
+        # Find the post first to get its category
+        # For now, assume it's a post (you might need to enhance this)
+        # Log the authenticated user ID for debugging
+        logger.info(f"Authenticated user ID: {authed_instance.id}")
+        logger.info(f"Authenticated username: {authed_instance.username}")
+        
+        result = await authed_instance.user.like("posts", post_id)
+        
+        # Log the result for debugging
+        logger.info(f"Like result for post {post_id}: {result}")
+        
+        # Check if the API returned an error
+        if isinstance(result, dict) and result.get('error'):
+            error_info = result.get('error', {})
+            error_code = error_info.get('code', 400)
+            error_message = error_info.get('message', 'Like operation failed')
+            
+            if error_code == 404:
+                raise HTTPException(
+                    status_code=404, 
+                    detail=f"Post {post_id} not found. It may have been deleted or you don't have access to it."
+                )
+            else:
+                raise HTTPException(status_code=error_code, detail=error_message)
+        
+        return {
+            "success": True, 
+            "liked": True,
+            "post_id": post_id,
+            "api_response": result
+        }
+    
+    except Exception as e:
+        logger.error(f"Like post error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/post/{post_id}/like")
+async def unlike_post(post_id: int = Path(...), authed_instance=Depends(require_auth)):
+    try:
+        result = await authed_instance.user.unlike("posts", post_id)
+        
+        # Log the result for debugging
+        logger.info(f"Unlike result for post {post_id}: {result}")
+        
+        # Check if the API returned an error
+        if isinstance(result, dict) and result.get('error'):
+            error_info = result.get('error', {})
+            error_code = error_info.get('code', 400)
+            error_message = error_info.get('message', 'Unlike operation failed')
+            
+            if error_code == 404:
+                raise HTTPException(
+                    status_code=404, 
+                    detail=f"Post {post_id} not found. It may have been deleted or you don't have access to it."
+                )
+            else:
+                raise HTTPException(status_code=error_code, detail=error_message)
+        
+        return {
+            "success": True, 
+            "liked": False,
+            "post_id": post_id,
+            "api_response": result
+        }
+    
+    except Exception as e:
+        logger.error(f"Unlike post error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/user/{user_id}/block")
+async def block_user(user_id: int = Path(...), authed_instance=Depends(require_auth)):
+    try:
+        user = await authed_instance.get_user(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        await user.block()
+        return {"success": True, "message": "User blocked successfully"}
+    
+    except Exception as e:
+        logger.error(f"Block user error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/user/{user_id}/block")
+async def unblock_user(user_id: int = Path(...), authed_instance=Depends(require_auth)):
+    try:
+        user = await authed_instance.get_user(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        await user.unblock()
+        return {"success": True, "message": "User unblocked successfully"}
+    
+    except Exception as e:
+        logger.error(f"Unblock user error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Financial Endpoints
+@app.get("/api/transactions")
+async def get_transactions(authed_instance=Depends(require_auth)):
+    try:
+        transactions = await authed_instance.get_transactions()
+        
+        return {
+            "transactions": transactions,
+            "count": len(transactions) if isinstance(transactions, list) else 0
+        }
+    
+    except Exception as e:
+        logger.error(f"Get transactions error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/paid-content")
 async def get_paid_content(
     performer_id: int | str | None = Query(None),
@@ -1177,29 +1746,62 @@ async def get_paid_content(
         logger.error(f"Get paid content error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# Live Streams Endpoint
-@app.get("/api/live-streams")
-async def get_live_streams(authed_instance=Depends(require_auth)):
+# Vault Endpoints
+@app.get("/api/vault")
+async def get_vault_media(
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    authed_instance=Depends(require_auth)
+):
     try:
-        streams = await authed_instance.get_live_streams()
+        vault_media = await authed_instance.get_vault_media(limit=limit, offset=offset)
         
-        streams_data = []
-        for stream in streams:
-            streams_data.append({
-                "id": stream.id,
-                "title": getattr(stream, 'title', ''),
-                "is_live": getattr(stream, 'is_live', False),
-                "viewer_count": getattr(stream, 'viewer_count', 0),
-                "started_at": stream.started_at.isoformat() if hasattr(stream, 'started_at') else None
+        vault_data = []
+        for media in vault_media:
+            vault_data.append({
+                "id": media.get('id'),
+                "type": media.get('type', 'photo'),
+                "url": media.get('src'),
+                "preview": media.get('preview'),
+                "created_at": media.get('createdAt')
             })
         
-        return {"live_streams": streams_data}
+        return {
+            "vault_media": vault_data,
+            "count": len(vault_data),
+            "limit": limit,
+            "offset": offset
+        }
     
     except Exception as e:
-        logger.error(f"Get live streams error: {str(e)}")
+        logger.error(f"Get vault media error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Promotions Endpoints (Read-only)
+@app.get("/api/promotions")
+async def get_promotions(authed_instance=Depends(require_auth)):
+    try:
+        # Get promotions from authenticated user's profile
+        user = authed_instance.user
+        promotions = user.promotions if hasattr(user, 'promotions') else []
+        
+        promotions_data = []
+        for promotion in promotions:
+            promotions_data.append({
+                "id": promotion.get('id'),
+                "discount": promotion.get('discount', 0),
+                "price": promotion.get('price', 0),
+                "duration": promotion.get('duration'),
+                "is_active": promotion.get('isActive', False),
+                "type": promotion.get('type')
+            })
+        
+        return {"promotions": promotions_data}
+    
+    except Exception as e:
+        logger.error(f"Get promotions error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=5000)
-

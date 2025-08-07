@@ -1,0 +1,30 @@
+Method/Endpoint,HTTP Method,Type,Description,Parameters,Usage
+/api/auth,POST,Authentication,Authenticate with OnlyFans using auth.json credentials,"auth: dict containing {id, cookie, x_bc, user_agent}","curl -X POST http://localhost:5000/api/auth -H 'Content-Type: application/json' -d '{""auth"": {""id"": ""123456"", ""cookie"": ""auth_cookie_value"", ""x_bc"": ""browser_check_token"", ""user_agent"": ""Mozilla/5.0...""}}'"
+/api/health,GET,System,Check API server health status,None,curl http://localhost:5000/api/health
+/api/docs,GET,Documentation,Get detailed API documentation with examples,None,curl http://localhost:5000/api/docs
+/api/me,GET,User Info,Get authenticated user's profile information,None (requires authentication),curl http://localhost:5000/api/me
+/api/user/{username},GET,User Info,Get any user's public profile information by username or ID,username: str (can be username or user ID),curl http://localhost:5000/api/user/johndoe
+/api/user/{username}/posts,GET,Content,Retrieve posts from a specific user's timeline,"username: str, limit: int (1-100, default 50), offset: int (default 0)","curl 'http://localhost:5000/api/user/johndoe/posts?limit=20&offset=0'"
+/api/user/{username}/messages,GET,Messages,Get direct message conversation history with a user,"username: str, limit: int (1-100, default 20), offset_id: int (optional - message ID to start from), cutoff_id: int (optional - message ID to stop at)","curl 'http://localhost:5000/api/user/johndoe/messages?limit=30&offset_id=123456&cutoff_id=789012'"
+/api/user/{username}/stories,GET,Content,Get active stories from a user's profile,username: str,curl http://localhost:5000/api/user/johndoe/stories
+/api/user/{username}/highlights,GET,Content,Get story highlights (saved stories) from a user,username: str,curl http://localhost:5000/api/user/johndoe/highlights
+/api/user/{username}/mass-messages,GET,Messages,Get mass/promotional messages sent by a specific user,"username: str, message_cutoff_id: int (optional - get messages after this ID)","curl 'http://localhost:5000/api/user/johndoe/mass-messages?message_cutoff_id=12345'"
+/api/user/{username}/archived-stories,GET,Content,Get archived stories (only available for authenticated user),"username: str, limit: int (1-100, default 100), offset: int (default 0)","curl 'http://localhost:5000/api/user/myusername/archived-stories?limit=50'"
+/api/user/{username}/socials,GET,Social,Get user's linked social media accounts (Twitter/Instagram/etc),username: str,curl http://localhost:5000/api/user/johndoe/socials
+/api/subscriptions,GET,Subscriptions,Get list of all active subscriptions,"limit: int (1-100, default 50), offset: int (default 0)","curl 'http://localhost:5000/api/subscriptions?limit=100&offset=0'"
+/api/chats,GET,Messages,Get all chat conversations with basic info and last message,"limit: int (1-100, default 50), offset: int (default 0)","curl 'http://localhost:5000/api/chats?limit=20&offset=0'"
+/api/mass-messages,GET,Messages,Get statistics for all mass messages sent by authenticated user,"limit: int (1-100, default 50), offset: int (default 0)","curl 'http://localhost:5000/api/mass-messages?limit=50&offset=0'"
+/api/user/{username}/message,POST,Messages,Send a direct message to a specific user,"username: str, text: str (message content), media_ids: list[int] (optional media attachments)","curl -X POST http://localhost:5000/api/user/johndoe/message -H 'Content-Type: application/json' -d '{""text"": ""Hello! Love your content"", ""media_ids"": []}'"
+/api/post/{post_id}/like,POST,Interaction,Like a specific post by ID,post_id: int,curl -X POST http://localhost:5000/api/post/123456789/like
+/api/post/{post_id}/like,DELETE,Interaction,Unlike a previously liked post,post_id: int,curl -X DELETE http://localhost:5000/api/post/123456789/like
+/api/user/{user_id}/block,POST,User Management,Block a user by their ID,user_id: int,curl -X POST http://localhost:5000/api/user/987654/block
+/api/user/{user_id}/block,DELETE,User Management,Unblock a previously blocked user,user_id: int,curl -X DELETE http://localhost:5000/api/user/987654/block
+/api/transactions,GET,Financial,Get all financial transactions history,None,curl http://localhost:5000/api/transactions
+/api/paid-content,GET,Financial,Get all purchased premium content (posts and messages),"performer_id: int|str (optional - filter by creator), limit: int (1-100, default 10), offset: int (default 0)","curl 'http://localhost:5000/api/paid-content?performer_id=123456&limit=20'"
+/api/vault,GET,Vault,Get media items stored in your private vault,"limit: int (1-100, default 50), offset: int (default 0)","curl 'http://localhost:5000/api/vault?limit=100&offset=0'"
+/api/promotions,GET,Promotions,Get current subscription promotions from authenticated user's profile,None,curl http://localhost:5000/api/promotions
+
+PARAMETER NOTES:
+- offset_id in messages: The message ID to start retrieving from (pagination by ID not numeric offset)
+- cutoff_id in messages: The message ID to stop retrieving at (useful for getting only new messages)
+- The messages endpoint uses ID-based pagination rather than offset-based pagination

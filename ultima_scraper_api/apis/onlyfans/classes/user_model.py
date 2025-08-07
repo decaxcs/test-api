@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import logging
 import sys
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Literal
 from urllib import parse
+
+logger = logging.getLogger(__name__)
 
 import ultima_scraper_api.apis.onlyfans.classes.message_model as message_model
 from ultima_scraper_api.apis.onlyfans.classes import post_model
@@ -670,12 +673,20 @@ class UserModel(StreamlinedUser["OnlyFansAuthModel", "OnlyFansAPI"]):
             return None
 
     async def like(self, category: str, identifier: int):
-        link = endpoint_links(identifier=category, identifier2=identifier).like
+        # Use the new favorites endpoint
+        user_id = self.get_authed().id
+        link = endpoint_links(identifier=category, identifier2=identifier, identifier3=user_id).favorite
+        logger.info(f"Like URL being called: {link}")
+        logger.info(f"Category: {category}, Post ID: {identifier}, User ID: {user_id}")
         results = await self.get_requester().json_request(link, method="POST")
         return results
 
     async def unlike(self, category: str, identifier: int):
-        link = endpoint_links(identifier=category, identifier2=identifier).like
+        # Use the new favorites endpoint
+        user_id = self.get_authed().id
+        link = endpoint_links(identifier=category, identifier2=identifier, identifier3=user_id).favorite
+        logger.info(f"Unlike URL being called: {link}")
+        logger.info(f"Category: {category}, Post ID: {identifier}, User ID: {user_id}")
         results = await self.get_requester().json_request(link, method="DELETE")
         return results
 
