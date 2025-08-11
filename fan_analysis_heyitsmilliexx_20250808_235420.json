@@ -1,0 +1,222 @@
+{
+  "fan_info": {
+    "id": 511545745,
+    "username": "heyitsmilliexx",
+    "name": "Millie",
+    "avatar": "https://public.onlyfans.com/files/t/tj/tjh/tjhhyhi6t6rlrl5khaus34ldjiuzjkj51753186983/511545745/avatar.jpg",
+    "analysis_date": "2025-08-08T15:54:12.305442+00:00"
+  },
+  "activity_analysis": {
+    "first_interaction": "2025-07-24T03:03:32+00:00",
+    "last_interaction": "2025-08-08T15:54:08+00:00",
+    "days_since_first_interaction": 15,
+    "days_since_last_interaction": 0,
+    "total_messages_exchanged": 82,
+    "messages_from_fan": 46,
+    "messages_from_you": 36,
+    "average_messages_per_week": 38.3,
+    "longest_silence_period": 7,
+    "current_activity_status": "active",
+    "interaction_frequency": "very_high",
+    "peak_activity_periods": [
+      {
+        "month": "2025-08",
+        "messages": 46
+      },
+      {
+        "month": "2025-07",
+        "messages": 36
+      }
+    ]
+  },
+  "spending_analysis": {
+    "total_spent": 0,
+    "total_spent_dollars": 0.0,
+    "ppv_purchases": 0,
+    "ppv_total": 0,
+    "tips_sent": 0,
+    "tips_total": 0,
+    "first_purchase_date": null,
+    "last_purchase_date": null,
+    "days_since_last_purchase": -1,
+    "average_purchase_value": 0,
+    "highest_single_purchase": 0,
+    "lowest_purchase": 0,
+    "spending_frequency": "never",
+    "spending_trend": "unknown",
+    "monthly_spending": {},
+    "purchase_patterns": []
+  },
+  "engagement_metrics": {
+    "response_rate": 127.8,
+    "average_response_time_hours": 1.1,
+    "initiates_conversations": true,
+    "conversation_depth": "deep",
+    "engagement_score": 70,
+    "loyalty_indicators": [
+      "Conversation initiator",
+      "Highly engaged"
+    ]
+  },
+  "content_interaction": {
+    "opened_ppv_count": 0,
+    "unopened_ppv_count": 0,
+    "ppv_open_rate": 0,
+    "preferred_content_type": "unknown",
+    "purchase_time_patterns": [],
+    "content_preferences": []
+  },
+  "timeline": [
+    {
+      "date": "2025-08-08T15:54:08+00:00",
+      "type": "message",
+      "from": "fan",
+      "text_preview": "<p>babe you here?</p>...",
+      "has_media": false
+    },
+    {
+      "date": "2025-08-08T13:26:29+00:00",
+      "type": "message",
+      "from": "fan",
+      "text_preview": "<p>how are you?</p>...",
+      "has_media": false
+    },
+    {
+      "date": "2025-08-08T13:26:19+00:00",
+      "type": "message",
+      "from": "you",
+      "text_preview": "hi...",
+      "has_media": false
+    },
+    {
+      "date": "2025-08-07T21:24:44+00:00",
+      "type": "message",
+      "from": "fan",
+      "text_preview": "<p>babe?</p>...",
+      "has_media": false
+    },
+    {
+      "date": "2025-08-07T21:24:01+00:00",
+      "type": "message",
+      "from": "you",
+      "text_preview": "wassup...",
+      "has_media": false
+    },
+    {
+      "date": "2025-08-07T20:50:49+00:00",
+      "type": "message",
+      "from": "fan",
+      "text_preview": "<p>hru babe?</p>...",
+      "has_media": false
+    },
+    {
+      "date": "2025-08-07T20:49:55+00:00",
+      "type": "message",
+      "from": "you",
+      "text_preview": "<p>sup</p>...",
+      "has_media": false
+    },
+    {
+      "date": "2025-08-07T16:29:51+00:00",
+      "type": "message",
+      "from": "fan",
+      "text_preview": "<p>grace?</p>...",
+      "has_media": false
+    },
+    {
+      "date": "2025-08-07T16:22:43+00:00",
+      "type": "message",
+      "from": "fan",
+      "text_preview": "<p>how are you?</p>...",
+      "has_media": false
+    },
+    {
+      "date": "2025-08-07T16:22:19+00:00",
+      "type": "message",
+      "from": "you",
+      "text_preview": "eepy!...",
+      "has_media": false
+    },
+    {
+      "date": "2025-08-07T16:21:47+00:00",
+      "type": "message",
+      "from": "you",
+      "text_preview": "sleepy...",
+      "has_media": false
+    },
+    {
+      "date": "2025-08-07T14:37:44+00:00",
+      "type": "message",
+      "from": "fan",
+      "text_preview": "<p>how are you?</p>...",
+      "has_media": false
+    },
+    {
+      "date": "2025-08-07T14:37:23+00:00",
+      "type": "message",
+      "from": "you",
+      "text_preview": "hi...",
+      "has_media": false
+    },
+    {
+      "date": "2025-08-06T17:43:36+00:00",
+      "type": "message",
+      "from": "fan",
+      "text_preview": "<p>sooo</p>...",
+      "has_media": false
+    },
+    {
+      "date": "2025-08-06T17:43:06+00:00",
+      "type": "message",
+      "from": "you",
+      "text_preview": "sup...",
+      "has_media": false
+    },
+    {
+      "date": "2025-08-06T16:31:07+00:00",
+      "type": "message",
+      "from": "fan",
+      "text_preview": "<p>fine. how are you grace?</p>...",
+      "has_media": false
+    },
+    {
+      "date": "2025-08-06T16:30:36+00:00",
+      "type": "message",
+      "from": "you",
+      "text_preview": "yes how was ur day...",
+      "has_media": false
+    },
+    {
+      "date": "2025-08-06T15:45:47+00:00",
+      "type": "message",
+      "from": "fan",
+      "text_preview": "<p>grace?</p>...",
+      "has_media": false
+    },
+    {
+      "date": "2025-08-05T21:47:55+00:00",
+      "type": "message",
+      "from": "fan",
+      "text_preview": "<p>good how bout you?</p>...",
+      "has_media": false
+    },
+    {
+      "date": "2025-08-05T21:47:23+00:00",
+      "type": "message",
+      "from": "you",
+      "text_preview": "how was your day?...",
+      "has_media": false
+    }
+  ],
+  "insights": [
+    "\u2705 Currently active (last seen 0 days ago)",
+    "\u274c Has never made a purchase",
+    "\ud83d\udc4d Moderately engaged fan (score: 70/100)",
+    "\ud83d\udcac Often starts conversations - very interested!",
+    "\u26a1 Quick responder (usually within 2 hours)"
+  ],
+  "recommendations": [
+    "\ud83d\udc8e Highly engaged but low spend - perfect for conversion campaign",
+    "\ud83d\udcac This fan values conversation - maintain personal touch"
+  ]
+}

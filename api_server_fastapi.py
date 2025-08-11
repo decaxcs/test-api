@@ -110,10 +110,15 @@ async def home():
             # Subscriptions & Chats
             "/api/subscriptions",
             "/api/chats",
+            "/api/messages/all",
+            "/api/messages/all/detailed",
             "/api/mass-messages",
             # Messaging
             "/api/user/{username}/message",
+            "/api/messages/mass-send",
+            "/api/messages/mass-send/filtered",
             # Interactions
+            "/api/post/{post_id}",
             "/api/post/{post_id}/like",
             "/api/user/{user_id}/block",
             # Financial
@@ -122,7 +127,10 @@ async def home():
             # Vault
             "/api/vault",
             # Promotions (Read-only)
-            "/api/promotions"
+            "/api/promotions",
+            # Debug & Testing
+            "/api/debug/user/{username}/messages",
+            "/api/test/user/{username}/message-access"
         ]
     }
 
@@ -138,22 +146,30 @@ async def health_check():
 # API documentation endpoint
 @app.get("/api/docs")
 async def api_documentation():
-    """Return API documentation for working endpoints only"""
+    """Return comprehensive API documentation"""
     return {
-        "title": "UltimaScraperAPI Documentation - Working Endpoints",
+        "title": "UltimaScraperAPI Documentation - Complete Reference",
         "version": "2.0.0",
         "base_url": "http://localhost:5000",
         "authentication": {
             "description": "All endpoints except /api/auth require authentication via auth.json",
-            "method": "First call /api/auth to authenticate, then use other endpoints"
+            "method": "First call /api/auth to authenticate, then use other endpoints",
+            "auth_format": {
+                "auth": {
+                    "id": "numeric_user_id",
+                    "cookie": "full_cookie_string",
+                    "x_bc": "browser_check_token",
+                    "user_agent": "browser_user_agent_string"
+                }
+            }
         },
         "endpoints": {
             "authentication": {
                 "/api/auth": {
                     "method": "POST",
-                    "description": "Authenticate with OnlyFans",
+                    "description": "Authenticate with OnlyFans using cookies",
                     "body": {"auth": {"id": "user_id", "cookie": "cookie_string", "x_bc": "browser_check", "user_agent": "user_agent_string"}},
-                    "response": {"success": True, "message": "Authentication successful", "user": {}}
+                    "response": {"success": True, "message": "Authentication successful", "user": {"id": 123, "username": "username", "name": "Display Name"}}
                 }
             },
             "user_info": {
@@ -161,14 +177,41 @@ async def api_documentation():
                     "method": "GET",
                     "description": "Get current authenticated user information",
                     "auth_required": True,
-                    "response": {"id": 123, "username": "user", "name": "Display Name"}
+                    "response": {
+                        "id": 123456,
+                        "username": "myusername",
+                        "name": "My Display Name",
+                        "email": "email@example.com",
+                        "avatar": "https://...",
+                        "header": "https://...",
+                        "bio": "Bio text",
+                        "posts_count": 100,
+                        "photos_count": 80,
+                        "videos_count": 20,
+                        "likes_count": 500,
+                        "is_verified": True
+                    }
                 },
                 "/api/user/{username}": {
                     "method": "GET",
                     "description": "Get profile information for a specific user",
                     "auth_required": True,
                     "parameters": {"username": "OnlyFans username"},
-                    "response": {"id": 123, "username": "user", "name": "Display Name", "bio": "Bio text"}
+                    "response": {
+                        "id": 789012,
+                        "username": "modelname",
+                        "name": "Model Name",
+                        "avatar": "https://...",
+                        "header": "https://...",
+                        "bio": "Bio text",
+                        "posts_count": 500,
+                        "photos_count": 400,
+                        "videos_count": 100,
+                        "joined": "2020-01-01",
+                        "is_verified": True,
+                        "subscription_price": 999,
+                        "promotions": []
+                    }
                 }
             },
             "content": {
@@ -176,18 +219,436 @@ async def api_documentation():
                     "method": "GET",
                     "description": "Get posts from a specific user",
                     "auth_required": True,
-                    "parameters": {"username": "OnlyFans username", "limit": 50, "offset": 0},
-                    "response": {"posts": [], "count": 25, "limit": 50, "offset": 0}
+                    "parameters": {
+                        "username": "OnlyFans username",
+                        "limit": "Number of posts (default: 50, max: 100)",
+                        "label": "Filter by label: archived, private_archived",
+                        "after_date": "Unix timestamp to get posts after"
+                    },
+                    "response": {
+                        "posts": [{
+                            "id": 123456789,
+                            "text": "Post content",
+                            "raw_text": "Post content without HTML",
+                            "price": 0,
+                            "created_at": "2025-01-01T00:00:00Z",
+                            "likes_count": 100,
+                            "comments_count": 50,
+                            "is_pinned": False,
+                            "is_archived": False,
+                            "media": []
+                        }],
+                        "count": 50,
+                        "limit": 50,
+                        "label": "",
+                        "after_date": None
+                    }
                 },
                 "/api/user/{username}/messages": {
                     "method": "GET",
                     "description": "Get message history with a specific user",
                     "auth_required": True,
-                    "parameters": {"username": "OnlyFans username", "limit": 20, "offset_id": "message_id_to_start_from", "cutoff_id": "message_id_to_stop_at"},
-                    "response": {"messages": [], "count": 25, "limit": 20}
+                    "parameters": {
+                        "username": "OnlyFans username",
+                        "limit": "Number of messages (default: 20, max: 100)",
+                        "offset_id": "Message ID to start from (pagination)",
+                        "cutoff_id": "Message ID to stop at"
+                    },
+                    "response": {
+                        "user": {"id": 123, "username": "username", "name": "Name"},
+                        "fetch_date": "2025-01-01T00:00:00Z",
+                        "total_messages": 50,
+                        "statistics": {
+                            "ppv_messages": 10,
+                            "locked_media_items": 5,
+                            "viewable_media_items": 20
+                        },
+                        "messages": [{
+                            "id": 111222333,
+                            "text": "Message text",
+                            "price": 0,
+                            "price_dollars": 0,
+                            "is_free": True,
+                            "is_tip": False,
+                            "is_opened": True,
+                            "is_new": False,
+                            "created_at": "2025-01-01T00:00:00Z",
+                            "media": []
+                        }]
+                    }
+                },
+                "/api/user/{username}/stories": {
+                    "method": "GET",
+                    "description": "Get stories from a specific user",
+                    "auth_required": True,
+                    "parameters": {"username": "OnlyFans username"},
+                    "response": {
+                        "stories": [{
+                            "id": 444555666,
+                            "created_at": "2025-01-01T00:00:00Z",
+                            "expires_at": "2025-01-02T00:00:00Z",
+                            "is_viewed": False,
+                            "media": []
+                        }]
+                    }
+                },
+                "/api/user/{username}/highlights": {
+                    "method": "GET",
+                    "description": "Get highlights from a specific user",
+                    "auth_required": True,
+                    "parameters": {"username": "OnlyFans username"},
+                    "response": {
+                        "highlights": [{
+                            "id": 123456,
+                            "title": "Highlight Title",
+                            "cover": "https://...",
+                            "stories_count": 10
+                        }]
+                    }
+                },
+                "/api/user/{username}/mass-messages": {
+                    "method": "GET",
+                    "description": "Get mass messages FROM a specific user (promotional messages)",
+                    "auth_required": True,
+                    "parameters": {
+                        "username": "OnlyFans username",
+                        "message_cutoff_id": "Optional message ID cutoff",
+                        "limit": "Number of messages to check (default: 100)"
+                    },
+                    "response": {
+                        "mass_messages": [{
+                            "id": 123456,
+                            "text": "Promotional message",
+                            "price": 0,
+                            "created_at": "2025-01-01T00:00:00Z",
+                            "is_mass_message": True,
+                            "queue_info": {
+                                "queue_id": 27138196267,
+                                "is_from_queue": True,
+                                "can_unsend_queue": False
+                            }
+                        }],
+                        "count": 10,
+                        "total_messages_checked": 100
+                    }
+                },
+                "/api/user/{username}/archived-stories": {
+                    "method": "GET",
+                    "description": "Get archived stories from a specific user",
+                    "auth_required": True,
+                    "parameters": {
+                        "username": "OnlyFans username",
+                        "limit": "Number of stories (default: 100)",
+                        "offset": "Pagination offset"
+                    },
+                    "response": {"archived_stories": [], "count": 0, "limit": 100, "offset": 0}
+                },
+                "/api/user/{username}/socials": {
+                    "method": "GET",
+                    "description": "Get social media links for a user",
+                    "auth_required": True,
+                    "parameters": {"username": "OnlyFans username"},
+                    "response": {"socials": []}
+                }
+            },
+            "subscriptions_chats": {
+                "/api/subscriptions": {
+                    "method": "GET",
+                    "description": "Get list of your active subscriptions",
+                    "auth_required": True,
+                    "parameters": {
+                        "limit": "Number of subscriptions (default: 50)",
+                        "sub_type": "Type: all, active, expired, attention",
+                        "filter_by": "Additional filter value"
+                    },
+                    "response": {
+                        "subscriptions": [{
+                            "id": 123456,
+                            "username": "modelname",
+                            "name": "Model Name",
+                            "avatar": "https://...",
+                            "subscription_price": 999,
+                            "is_active": True,
+                            "expire_date": "2025-02-01T00:00:00Z"
+                        }],
+                        "count": 10
+                    }
+                },
+                "/api/chats": {
+                    "method": "GET",
+                    "description": "Get list of your message chats",
+                    "auth_required": True,
+                    "parameters": {
+                        "limit": "Number of chats (default: 50)",
+                        "offset": "Pagination offset"
+                    },
+                    "response": {
+                        "chats": [{
+                            "id": 123456,
+                            "username": "username",
+                            "name": "Display Name",
+                            "avatar": "https://...",
+                            "last_message": {"id": 111, "text": "Last message", "created_at": "2025-01-01T00:00:00Z"}
+                        }],
+                        "count": 50
+                    }
+                },
+                "/api/messages/all": {
+                    "method": "GET",
+                    "description": "Get all messages from all chats",
+                    "auth_required": True,
+                    "parameters": {
+                        "limit_per_chat": "Max messages per chat (default: 50)",
+                        "include_purchases": "Include PPV purchases (default: true)"
+                    },
+                    "response": {
+                        "total_messages": 500,
+                        "total_chats": 10,
+                        "chat_summaries": [],
+                        "messages": []
+                    }
+                },
+                "/api/messages/all/detailed": {
+                    "method": "GET",
+                    "description": "Get all messages with detailed statistics and filtering",
+                    "auth_required": True,
+                    "parameters": {
+                        "limit_per_chat": "Max messages per chat (default: 100)",
+                        "include_purchases": "Include PPV purchases",
+                        "include_tips": "Include tip messages",
+                        "only_with_media": "Only messages with media"
+                    },
+                    "response": {
+                        "statistics": {
+                            "total_messages": 1000,
+                            "total_chats": 20,
+                            "ppv_messages": 50,
+                            "tip_messages": 30,
+                            "total_spent": 50000
+                        },
+                        "chats": [],
+                        "messages": []
+                    }
+                },
+                "/api/mass-messages": {
+                    "method": "GET",
+                    "description": "Get your sent mass message campaigns",
+                    "auth_required": True,
+                    "parameters": {
+                        "limit": "Number of campaigns (default: 50)",
+                        "offset": "Pagination offset"
+                    },
+                    "response": {"mass_messages": [], "count": 0}
+                }
+            },
+            "messaging": {
+                "/api/user/{username}/message": {
+                    "method": "POST",
+                    "description": "Send a message to a specific user",
+                    "auth_required": True,
+                    "parameters": {"username": "Recipient username"},
+                    "body": {
+                        "text": "Message text",
+                        "media_ids": [123, 456]
+                    },
+                    "response": {
+                        "success": True,
+                        "message_id": 987654321,
+                        "text": "Message text",
+                        "created_at": "2025-01-01T00:00:00Z"
+                    }
+                },
+                "/api/messages/mass-send": {
+                    "method": "POST",
+                    "description": "Send a message to all chats at once",
+                    "auth_required": True,
+                    "parameters": {
+                        "test_mode": "Test mode - only show recipients (default: false)",
+                        "exclude_usernames": "List of usernames to exclude"
+                    },
+                    "body": {
+                        "text": "Message text",
+                        "media_ids": [],
+                        "price": 0,
+                        "locked_text": False
+                    },
+                    "response": {
+                        "total_chats": 100,
+                        "successful_sends": 95,
+                        "failed_sends": 5,
+                        "test_mode": False,
+                        "results": []
+                    }
+                },
+                "/api/messages/mass-send/filtered": {
+                    "method": "POST",
+                    "description": "Send messages to filtered chats with advanced options",
+                    "auth_required": True,
+                    "parameters": {
+                        "only_subscribed": "Only send to subscribed users",
+                        "only_active_chats": "Only send to recently active chats",
+                        "days_active": "Consider chats active within X days",
+                        "test_mode": "Test mode (default: true)",
+                        "exclude_usernames": "Usernames to exclude"
+                    },
+                    "body": {
+                        "text": "Message text",
+                        "media_ids": [],
+                        "price": 0,
+                        "locked_text": False
+                    },
+                    "response": {
+                        "total_chats_found": 100,
+                        "chats_after_filtering": 50,
+                        "successful": 48,
+                        "failed": 2,
+                        "summary": {}
+                    }
+                }
+            },
+            "interactions": {
+                "/api/post/{post_id}": {
+                    "method": "GET",
+                    "description": "Get a specific post by ID",
+                    "auth_required": True,
+                    "parameters": {"post_id": "Numeric post ID"},
+                    "response": {"post": {}, "found": True}
+                },
+                "/api/post/{post_id}/like": {
+                    "method": "POST",
+                    "description": "Like a post",
+                    "auth_required": True,
+                    "parameters": {"post_id": "Numeric post ID"},
+                    "response": {"success": True, "liked": True, "post_id": 123456}
+                },
+                "/api/post/{post_id}/like": {
+                    "method": "DELETE",
+                    "description": "Unlike a post",
+                    "auth_required": True,
+                    "parameters": {"post_id": "Numeric post ID"},
+                    "response": {"success": True, "liked": False, "post_id": 123456}
+                },
+                "/api/user/{user_id}/block": {
+                    "method": "POST",
+                    "description": "Block a user",
+                    "auth_required": True,
+                    "parameters": {"user_id": "Numeric user ID"},
+                    "response": {"success": True, "message": "User blocked successfully"}
+                },
+                "/api/user/{user_id}/block": {
+                    "method": "DELETE",
+                    "description": "Unblock a user",
+                    "auth_required": True,
+                    "parameters": {"user_id": "Numeric user ID"},
+                    "response": {"success": True, "message": "User unblocked successfully"}
+                }
+            },
+            "financial": {
+                "/api/transactions": {
+                    "method": "GET",
+                    "description": "Get your transaction history",
+                    "auth_required": True,
+                    "response": {"transactions": [], "count": 0}
+                },
+                "/api/paid-content": {
+                    "method": "GET",
+                    "description": "Get paid content purchases",
+                    "auth_required": True,
+                    "parameters": {
+                        "performer_id": "Filter by specific performer",
+                        "limit": "Number of items (default: 10)",
+                        "offset": "Pagination offset"
+                    },
+                    "response": {
+                        "paid_content": [{
+                            "id": 123456,
+                            "type": "message",
+                            "text": "Content description",
+                            "price": 999,
+                            "author": {"id": 789, "username": "creator"},
+                            "created_at": "2025-01-01T00:00:00Z"
+                        }],
+                        "count": 10
+                    }
+                }
+            },
+            "vault": {
+                "/api/vault": {
+                    "method": "GET",
+                    "description": "Get media from your vault",
+                    "auth_required": True,
+                    "parameters": {
+                        "limit": "Number of items (default: 50)",
+                        "offset": "Pagination offset"
+                    },
+                    "response": {
+                        "vault_media": [{
+                            "id": 123456,
+                            "type": "photo",
+                            "url": "https://...",
+                            "preview": "https://...",
+                            "created_at": "2025-01-01T00:00:00Z"
+                        }],
+                        "count": 50
+                    }
+                }
+            },
+            "other": {
+                "/api/promotions": {
+                    "method": "GET",
+                    "description": "Get your active promotions (read-only)",
+                    "auth_required": True,
+                    "response": {
+                        "promotions": [{
+                            "id": 123,
+                            "discount": 50,
+                            "price": 499,
+                            "duration": 30,
+                            "is_active": True,
+                            "type": "subscription"
+                        }]
+                    }
+                }
+            },
+            "debug_testing": {
+                "/api/debug/user/{username}/messages": {
+                    "method": "GET",
+                    "description": "Debug endpoint to see raw message data and identify mass messages",
+                    "auth_required": True,
+                    "parameters": {
+                        "username": "User to analyze",
+                        "limit": "Number of messages to check (max: 50)"
+                    },
+                    "response": {
+                        "user": {"id": 123, "username": "username"},
+                        "messages_analyzed": 10,
+                        "messages": []
+                    }
+                },
+                "/api/test/user/{username}/message-access": {
+                    "method": "GET",
+                    "description": "Test endpoint to check if you can access messages from a user",
+                    "auth_required": True,
+                    "parameters": {"username": "User to test"},
+                    "response": {
+                        "user": {"id": 123, "username": "username"},
+                        "tests": {
+                            "default_get_messages": {"success": True, "message_count": 50},
+                            "has_chat": True,
+                            "paid_content": {"success": True, "count": 5}
+                        }
+                    }
                 }
             }
-        }
+        },
+        "notes": [
+            "All timestamps are in ISO 8601 format",
+            "Prices are in cents (divide by 100 for dollars)",
+            "Media URLs are temporary and IP-locked",
+            "Rate limits apply - avoid making too many requests",
+            "Message pagination uses offset_id, not offset",
+            "Post pagination uses label and after_date parameters"
+        ]
     }
 
 # Authentication endpoint
@@ -650,26 +1111,108 @@ async def get_user_highlights(username: str = Path(...), authed_instance=Depends
 async def get_user_mass_messages(
     username: str = Path(...),
     message_cutoff_id: int | None = Query(None),
+    limit: int = Query(100, ge=1, le=200),
     authed_instance=Depends(require_auth)
 ):
+    """
+    Get mass messages FROM a specific user (messages they sent to you)
+    Mass messages are identified by isFromQueue=True or having a queue_id
+    """
     try:
         user = await authed_instance.get_user(username)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
-        mass_messages = await user.get_mass_messages(message_cutoff_id=message_cutoff_id)
+        # Get all messages from this user
+        messages = []
+        try:
+            logger.info(f"Fetching messages for user {username} (ID: {user.id}) with limit={limit}")
+            messages = await user.get_messages(limit=limit, cutoff_id=message_cutoff_id)
+            logger.info(f"Retrieved {len(messages)} messages")
+        except Exception as e:
+            logger.error(f"Error getting messages: {e}")
+            # Try without cutoff_id if it fails
+            try:
+                messages = await user.get_messages(limit=limit)
+                logger.info(f"Retrieved {len(messages)} messages without cutoff_id")
+            except Exception as e2:
+                logger.error(f"Error getting messages (retry): {e2}")
         
+        # Also check paid content messages
+        paid_messages = []
+        try:
+            paid_content = await user.get_paid_contents()
+            paid_messages = [
+                x for x in paid_content 
+                if hasattr(x, 'is_mass_message') and callable(x.is_mass_message)
+            ]
+            logger.info(f"Found {len(paid_messages)} paid messages with is_mass_message method")
+        except Exception as e:
+            logger.warning(f"Could not get paid content: {e}")
+        
+        # Filter for mass messages FROM this user
         mass_messages_data = []
-        for message in mass_messages:
-            mass_messages_data.append({
-                "id": message.id,
-                "text": getattr(message, 'text', ''),
-                "price": getattr(message, 'price', 0),
-                "created_at": message.created_at.isoformat() if hasattr(message, 'created_at') else None,
-                "is_mass_message": True
-            })
+        total_checked = 0
         
-        return {"mass_messages": mass_messages_data}
+        for message in messages + paid_messages:
+            total_checked += 1
+            try:
+                # Check if it's a mass message
+                is_mass = False
+                queue_info = {}
+                
+                if hasattr(message, 'is_mass_message') and callable(message.is_mass_message):
+                    is_mass = message.is_mass_message()
+                elif hasattr(message, 'isFromQueue'):
+                    is_mass = bool(message.isFromQueue)
+                elif hasattr(message, 'queue_id'):
+                    is_mass = message.queue_id is not None
+                
+                # Also check raw data
+                if hasattr(message, '__raw__'):
+                    raw = message.__raw__
+                    if raw.get('isFromQueue') or raw.get('queueId'):
+                        is_mass = True
+                        queue_info = {
+                            "queue_id": raw.get('queueId'),
+                            "is_from_queue": raw.get('isFromQueue', False),
+                            "can_unsend_queue": raw.get('canUnsendQueue', False)
+                        }
+                
+                if is_mass:
+                    # Make sure the message is FROM the user we're querying
+                    author_id = None
+                    if hasattr(message, 'author') and hasattr(message.author, 'id'):
+                        author_id = message.author.id
+                    elif hasattr(message, 'fromUser') and hasattr(message.fromUser, 'id'):
+                        author_id = message.fromUser.id
+                    
+                    if author_id == user.id:
+                        mass_messages_data.append({
+                            "id": message.id,
+                            "text": getattr(message, 'text', ''),
+                            "price": getattr(message, 'price', 0),
+                            "created_at": message.created_at.isoformat() if hasattr(message, 'created_at') else None,
+                            "is_mass_message": True,
+                            "is_opened": getattr(message, 'isOpened', False),
+                            "is_new": getattr(message, 'isNew', False),
+                            "media_count": getattr(message, 'media_count', 0),
+                            "queue_info": queue_info
+                        })
+            except Exception as e:
+                logger.error(f"Error processing message: {e}")
+                continue
+        
+        return {
+            "mass_messages": mass_messages_data,
+            "count": len(mass_messages_data),
+            "total_messages_checked": total_checked,
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "name": user.name
+            }
+        }
     
     except Exception as e:
         logger.error(f"Get user mass messages error: {str(e)}")
@@ -1050,36 +1593,96 @@ async def get_all_messages(
                                     "id": message.get('id'),
                                     "text": message.get('text', ''),
                                     "price": message.get('price', 0),
+                                    "price_dollars": message.get('price', 0) / 100 if message.get('price', 0) else 0,
                                     "is_free": message.get('isFree', True),
                                     "is_tip": message.get('isTip', False),
-                                    "created_at": message.get('createdAt'),
+                                    "is_opened": message.get('isOpened', True),
+                                    "is_new": message.get('isNew', False),
+                                    "is_from_queue": message.get('isFromQueue', False),
+                                    "queue_id": message.get('queue_id'),
+                                    "can_be_pinned": message.get('canBePinned', False),
+                                    "can_purchase": message.get('canPurchase', False),
+                                    "can_purchase_reason": message.get('canPurchaseReason'),
+                                    "can_unsend": message.get('canUnsend', False),
+                                    "can_be_favorited": message.get('canBeFavorited', False),
+                                    "can_be_tipped": message.get('canBeTipped', False),
+                                    "can_report": message.get('canReport', False),
+                                    "locked_text": message.get('lockedText', False),
+                                    "has_opened": message.get('hasOpened', False),
+                                    "is_liked": message.get('isLiked', False),
+                                    "is_media_ready": message.get('isMediaReady', True),
+                                    "is_performer": message.get('isPerformer', False),
+                                    "is_forward": message.get('isForward', False),
+                                    "is_pinned": message.get('isPinned', False),
+                                    "giphy_id": message.get('giphyId'),
+                                    "product_id": message.get('productId'),
+                                    "response_type": message.get('responseType', 'message'),
+                                    "notification_type": message.get('notificationType'),
+                                    "reply_on_message_id": message.get('replyOnMessageId'),
+                                    "created_at": message.get('createdAt') or message.get('created_at'),
+                                    "changed_at": message.get('changedAt'),
+                                    "media_count": message.get('mediaCount', 0),
+                                    "preview_count": len(message.get('previews', [])),
+                                    "previews": message.get('previews', []),
+                                    "attachments": message.get('attachments', []),
                                     "chat_user": {
                                         "id": user_id,
                                         "username": username,
                                         "name": name
-                                    }
+                                    },
+                                    "author": message.get('fromUser', {}) or message.get('author', {}),
+                                    "_raw": message
                                 }
                             else:
-                                # MessageModel object
+                                # MessageModel object - include ALL message fields
                                 message_dict = {
                                     "id": message.id,
                                     "text": message.text,
                                     "price": message.price if hasattr(message, 'price') else 0,
+                                    "price_dollars": message.price / 100 if hasattr(message, 'price') and message.price else 0,
                                     "is_free": message.isFree if hasattr(message, 'isFree') else True,
                                     "is_tip": message.isTip if hasattr(message, 'isTip') else False,
                                     "is_opened": message.isOpened if hasattr(message, 'isOpened') else True,
                                     "is_new": message.isNew if hasattr(message, 'isNew') else False,
+                                    "is_from_queue": getattr(message, 'isFromQueue', False),
+                                    "queue_id": getattr(message, 'queue_id', None),
+                                    "can_be_pinned": getattr(message, 'canBePinned', False),
+                                    "can_purchase": getattr(message, 'canPurchase', False),
+                                    "can_purchase_reason": getattr(message, 'canPurchaseReason', None),
+                                    "can_unsend": getattr(message, 'canUnsend', False),
+                                    "can_be_favorited": getattr(message, 'canBeFavorited', False),
+                                    "can_be_tipped": getattr(message, 'canBeTipped', False),
+                                    "can_report": getattr(message, 'canReport', False),
+                                    "locked_text": getattr(message, 'lockedText', False),
+                                    "has_opened": getattr(message, 'hasOpened', False),
+                                    "is_liked": getattr(message, 'isLiked', False),
+                                    "is_media_ready": getattr(message, 'isMediaReady', True),
+                                    "is_performer": getattr(message, 'isPerformer', False),
+                                    "is_forward": getattr(message, 'isForward', False),
+                                    "is_pinned": getattr(message, 'isPinned', False),
+                                    "giphy_id": getattr(message, 'giphyId', None),
+                                    "product_id": getattr(message, 'productId', None),
+                                    "response_type": getattr(message, 'responseType', 'message'),
+                                    "notification_type": getattr(message, 'notificationType', None),
+                                    "reply_on_message_id": getattr(message, 'replyOnMessageId', None),
                                     "created_at": message.created_at.isoformat() if hasattr(message, 'created_at') and message.created_at else None,
+                                    "changed_at": getattr(message, 'changedAt', None),
+                                    "media_count": message.media_count if hasattr(message, 'media_count') else 0,
+                                    "preview_count": len(getattr(message, 'previews', [])),
+                                    "previews": getattr(message, 'previews', []),
+                                    "attachments": getattr(message, 'attachments', []),
                                     "chat_user": {
                                         "id": user_id,
                                         "username": username,
                                         "name": name
                                     },
                                     "author": {
-                                        "id": message.author.id if hasattr(message, 'author') else None,
-                                        "username": message.author.username if hasattr(message, 'author') else None,
+                                        "id": message.author.id if hasattr(message, 'author') and message.author else None,
+                                        "username": message.author.username if hasattr(message, 'author') and message.author else None,
+                                        "name": message.author.name if hasattr(message, 'author') and message.author else None
                                     },
-                                    "media_count": message.media_count if hasattr(message, 'media_count') else 0
+                                    # Include raw data if available
+                                    "_raw": getattr(message, '_data', None)
                                 }
                                 
                                 # Add media if available
@@ -1775,6 +2378,141 @@ async def get_vault_media(
     
     except Exception as e:
         logger.error(f"Get vault media error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Debug Endpoints
+@app.get("/api/debug/user/{username}/messages")
+async def debug_user_messages(
+    username: str = Path(...),
+    limit: int = Query(10, ge=1, le=50),
+    authed_instance=Depends(require_auth)
+):
+    """
+    Debug endpoint to see raw message data and identify mass messages
+    """
+    try:
+        user = await authed_instance.get_user(username)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        messages = await user.get_messages(limit=limit)
+        
+        debug_data = []
+        for i, message in enumerate(messages):
+            msg_debug = {
+                "index": i,
+                "id": message.id,
+                "text": getattr(message, 'text', '')[:100] + "...",
+                "price": getattr(message, 'price', 0),
+                "is_from_queue": getattr(message, 'isFromQueue', None),
+                "is_from_queue_raw": message.__raw__.get('isFromQueue') if hasattr(message, '__raw__') else None,
+                "queue_id": getattr(message, 'queue_id', None),
+                "queue_id_raw": message.__raw__.get('queueId') if hasattr(message, '__raw__') else None,
+                "author_id": message.author.id if hasattr(message, 'author') else None,
+                "author_username": message.author.username if hasattr(message, 'author') else None,
+                "is_mass_message_method": message.is_mass_message() if hasattr(message, 'is_mass_message') and callable(message.is_mass_message) else None,
+                "raw_keys": list(message.__raw__.keys()) if hasattr(message, '__raw__') else []
+            }
+            
+            # Check for any queue-related fields in raw data
+            if hasattr(message, '__raw__'):
+                queue_fields = {k: v for k, v in message.__raw__.items() if 'queue' in k.lower()}
+                if queue_fields:
+                    msg_debug["queue_related_fields"] = queue_fields
+            
+            debug_data.append(msg_debug)
+        
+        return {
+            "user": {
+                "id": user.id,
+                "username": user.username
+            },
+            "messages_analyzed": len(debug_data),
+            "messages": debug_data
+        }
+    
+    except Exception as e:
+        logger.error(f"Debug messages error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/test/user/{username}/message-access")
+async def test_message_access(
+    username: str = Path(...),
+    authed_instance=Depends(require_auth)
+):
+    """
+    Test endpoint to check if we can access messages from a user
+    """
+    try:
+        user = await authed_instance.get_user(username)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        results = {
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "name": user.name
+            },
+            "tests": {}
+        }
+        
+        # Test 1: Try to get messages with default parameters
+        try:
+            messages = await user.get_messages()
+            results["tests"]["default_get_messages"] = {
+                "success": True,
+                "message_count": len(messages),
+                "first_message": messages[0].text[:50] if messages else None
+            }
+        except Exception as e:
+            results["tests"]["default_get_messages"] = {
+                "success": False,
+                "error": str(e)
+            }
+        
+        # Test 2: Try with explicit limit
+        try:
+            messages = await user.get_messages(limit=5)
+            results["tests"]["with_limit"] = {
+                "success": True,
+                "message_count": len(messages)
+            }
+        except Exception as e:
+            results["tests"]["with_limit"] = {
+                "success": False,
+                "error": str(e)
+            }
+        
+        # Test 3: Check if we have chat relationship
+        try:
+            chats = await authed_instance.get_chats(limit=200)
+            has_chat = any(
+                chat.user.username == username 
+                for chat in chats 
+                if hasattr(chat, 'user') and chat.user
+            )
+            results["tests"]["has_chat"] = has_chat
+        except Exception as e:
+            results["tests"]["has_chat"] = f"Error: {str(e)}"
+        
+        # Test 4: Try to get paid content
+        try:
+            paid_content = await user.get_paid_contents()
+            results["tests"]["paid_content"] = {
+                "success": True,
+                "count": len(paid_content) if isinstance(paid_content, list) else 0
+            }
+        except Exception as e:
+            results["tests"]["paid_content"] = {
+                "success": False,
+                "error": str(e)
+            }
+        
+        return results
+    
+    except Exception as e:
+        logger.error(f"Test message access error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Promotions Endpoints (Read-only)

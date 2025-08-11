@@ -16,7 +16,15 @@
       "Bash(cd:*)",
       "Bash(cd:*)",
       "Bash(cd:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(python3:*)",
+      "Bash(pip install:*)",
+      "Bash(pip3 install:*)",
+      "Bash(source:*)",
+      "Bash(python:*)",
+      "Bash(lsof:*)",
+      "Bash(kill:*)",
+      "Bash(cd:*)"
     ],
     "deny": []
   }

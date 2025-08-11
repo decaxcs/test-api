@@ -1,0 +1,183 @@
+2025-08-09 03:40:43,261 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/DATAHOARDERS/dynamic-rules/main/onlyfans.json "HTTP/1.1 200 OK"
+2025-08-09 03:40:43,273 - __main__ - INFO - Authenticating with OnlyFans...
+2025-08-09 03:40:44,308 - __main__ - INFO - Successfully authenticated as: u513665682
+2025-08-09 03:40:44,309 - __main__ - INFO - Starting message poller (checking every 30 seconds)
+2025-08-09 03:40:44,310 - __main__ - INFO - Press Ctrl+C to stop
+2025-08-09 03:40:44,310 - __main__ - INFO - 
+============================================================
+2025-08-09 03:40:44,314 - __main__ - INFO - Starting polling cycle...
+2025-08-09 03:40:44,315 - __main__ - INFO - ============================================================
+2025-08-09 03:40:44,328 - __main__ - INFO - Getting list of all chat users...
+2025-08-09 03:40:45,338 - __main__ - INFO - Checking messages from 3 users
+2025-08-09 03:40:45,338 - __main__ - INFO - 
+Checking messages from heyitsmilliexx (ID: 511545745)
+2025-08-09 03:40:58,186 - __main__ - INFO -   Fetched 86 messages:
+2025-08-09 03:40:58,186 - __main__ - INFO -     1. [2025-08-08 19:32:13] heyitsmilliexx: <p><span>so how’s today treating you so far babe?</span></p> (ID: 6584209958329)
+2025-08-09 03:40:58,187 - __main__ - INFO -     2. [2025-08-08 19:30:50] ME: <p>yes just busy 🥺</p> (ID: 6584201948012)
+2025-08-09 03:40:58,187 - __main__ - INFO -     3. [2025-08-08 19:20:44] heyitsmilliexx: <p>babe still here?</p> (ID: 6584137378110)
+2025-08-09 03:40:58,188 - __main__ - INFO -     4. [2025-08-08 19:12:48] heyitsmilliexx: <p>how are you babe?</p> (ID: 6584078394387)
+2025-08-09 03:40:58,188 - __main__ - INFO -     5. [2025-08-08 19:12:29] ME: <p>yes hbu</p> (ID: 6584075698399)
+2025-08-09 03:40:58,188 - __main__ - INFO -     6. [2025-08-08 13:26:29] heyitsmilliexx: <p>how are you?</p> (ID: 6581804833451)
+2025-08-09 03:40:58,189 - __main__ - INFO -     7. [2025-08-08 13:26:19] ME: hi (ID: 6581803747867)
+2025-08-09 03:40:58,189 - __main__ - INFO -     8. [2025-08-07 21:24:44] heyitsmilliexx: <p>babe?</p> (ID: 6575509053170)
+2025-08-09 03:40:58,189 - __main__ - INFO -     9. [2025-08-07 21:24:01] ME: wassup (ID: 6575504418146)
+2025-08-09 03:40:58,189 - __main__ - INFO -     10. [2025-08-07 20:50:49] heyitsmilliexx: <p>hru babe?</p> (ID: 6575268858338)
+2025-08-09 03:40:58,190 - __main__ - INFO -     11. [2025-08-07 20:49:55] ME: <p>sup</p> (ID: 6575264041218)
+2025-08-09 03:40:58,190 - __main__ - INFO -     12. [2025-08-07 16:29:51] heyitsmilliexx: <p>grace?</p> (ID: 6573538685887)
+2025-08-09 03:40:58,190 - __main__ - INFO -     13. [2025-08-07 16:22:43] heyitsmilliexx: <p>how are you?</p> (ID: 6573486419770)
+2025-08-09 03:40:58,190 - __main__ - INFO -     14. [2025-08-07 16:22:19] ME: eepy! (ID: 6573483394407)
+2025-08-09 03:40:58,190 - __main__ - INFO -     15. [2025-08-07 16:21:47] ME: sleepy (ID: 6573479352438)
+2025-08-09 03:40:58,191 - __main__ - INFO -     16. [2025-08-07 14:37:44] heyitsmilliexx: <p>how are you?</p> (ID: 6572757273259)
+2025-08-09 03:40:58,191 - __main__ - INFO -     17. [2025-08-07 14:37:23] ME: hi (ID: 6572755167500)
+2025-08-09 03:40:58,191 - __main__ - INFO -     18. [2025-08-06 17:43:36] heyitsmilliexx: <p>sooo</p> (ID: 6564412988665)
+2025-08-09 03:40:58,191 - __main__ - INFO -     19. [2025-08-06 17:43:06] ME: sup (ID: 6564410096500)
+2025-08-09 03:40:58,192 - __main__ - INFO -     20. [2025-08-06 16:31:07] heyitsmilliexx: <p>fine. how are you grace?</p> (ID: 6563931789502)
+2025-08-09 03:40:58,192 - __main__ - INFO -     21. [2025-08-06 16:30:36] ME: yes how was ur day (ID: 6563928452118)
+2025-08-09 03:40:58,192 - __main__ - INFO -     22. [2025-08-06 15:45:47] heyitsmilliexx: <p>grace?</p> (ID: 6563600451771)
+2025-08-09 03:40:58,192 - __main__ - INFO -     23. [2025-08-05 21:47:55] heyitsmilliexx: <p>good how bout you?</p> (ID: 6556493491088)
+2025-08-09 03:40:58,192 - __main__ - INFO -     24. [2025-08-05 21:47:23] ME: how was your day? (ID: 6556490331606)
+2025-08-09 03:40:58,193 - __main__ - INFO -     25. [2025-08-05 21:46:26] heyitsmilliexx: <p>soo how are you?</p> (ID: 6556484863213)
+2025-08-09 03:40:58,193 - __main__ - INFO -     26. [2025-08-05 21:45:46] ME: hi (ID: 6556480743605)
+2025-08-09 03:40:58,193 - __main__ - INFO -     27. [2025-08-05 21:04:08] heyitsmilliexx: <p>okay bye</p> (ID: 6556188173098)
+2025-08-09 03:40:58,193 - __main__ - INFO -     28. [2025-08-05 21:03:53] ME: goodnight imma sleep (ID: 6556185894319)
+2025-08-09 03:40:58,194 - __main__ - INFO -     29. [2025-08-05 19:52:17] heyitsmilliexx: <p>babe?</p> (ID: 6555733219183)
+2025-08-09 03:40:58,194 - __main__ - INFO -     30. [2025-08-05 19:51:58] ME: <p>ey</p> (ID: 6555731555704)
+2025-08-09 03:40:58,194 - __main__ - INFO -     31. [2025-08-05 17:20:58] heyitsmilliexx: <p>fine how are you babe?</p> (ID: 6554729077886)
+2025-08-09 03:40:58,194 - __main__ - INFO -     32. [2025-08-05 17:20:48] ME: <p>hi? how r u</p> (ID: 6554727911590)
+2025-08-09 03:40:58,194 - __main__ - INFO -     33. [2025-08-05 15:23:33] heyitsmilliexx: <p>you there Grace?</p> (ID: 6553942804398)
+2025-08-09 03:40:58,195 - __main__ - INFO -     34. [2025-08-05 14:58:52] heyitsmilliexx: <p>you busy?</p> (ID: 6553750128931)
+2025-08-09 03:40:58,195 - __main__ - INFO -     35. [2025-08-05 14:12:18] heyitsmilliexx: <p>Grace?</p> (ID: 6553457226086)
+2025-08-09 03:40:58,195 - __main__ - INFO -     36. [2025-08-04 18:44:52] heyitsmilliexx: <p>hru Grace?</p> (ID: 6545797200319)
+2025-08-09 03:40:58,195 - __main__ - INFO -     37. [2025-08-04 18:41:15] ME: <p>hello</p> (ID: 6545776460266)
+2025-08-09 03:40:58,195 - __main__ - INFO -     38. [2025-08-04 18:24:25] heyitsmilliexx: <p>Grace?</p> (ID: 6545674759096)
+2025-08-09 03:40:58,196 - __main__ - INFO -     39. [2025-08-01 18:20:02] heyitsmilliexx: <p>wyd rn?</p> (ID: 6518013430763)
+2025-08-09 03:40:58,196 - __main__ - INFO -     40. [2025-08-01 18:17:32] ME: <p>sleepy</p> (ID: 6517994748831)
+2025-08-09 03:40:58,196 - __main__ - INFO -     41. [2025-08-01 18:15:13] heyitsmilliexx: <p>wdym?</p> (ID: 6517977160945)
+2025-08-09 03:40:58,196 - __main__ - INFO -     42. [2025-08-01 18:14:43] ME: <p>eepy</p> (ID: 6517973334390)
+2025-08-09 03:40:58,197 - __main__ - INFO -     43. [2025-08-01 18:10:47] heyitsmilliexx: <p>Grace?</p> (ID: 6517942117444)
+2025-08-09 03:40:58,197 - __main__ - INFO -     44. [2025-08-01 17:46:43] heyitsmilliexx: <p><span>i'm not interrupting you while your busy today am i babe? </span></p> (ID: 6517785149988)
+2025-08-09 03:40:58,197 - __main__ - INFO -     45. [2025-08-01 17:46:21] ME: <p>good</p> (ID: 6517783198382)
+2025-08-09 03:40:58,197 - __main__ - INFO -     46. [2025-08-01 17:45:55] heyitsmilliexx: <p><span>finebby, talk to me bby, hows your day been really?</span></p> (ID: 6517781026551)
+2025-08-09 03:40:58,197 - __main__ - INFO -     47. [2025-08-01 17:45:40] ME: <p>good, hbu</p> (ID: 6517779727341)
+2025-08-09 03:40:58,198 - __main__ - INFO -     48. [2025-08-01 17:45:34] heyitsmilliexx: <p>how are you babe?</p> (ID: 6517779227947)
+2025-08-09 03:40:58,198 - __main__ - INFO -     49. [2025-08-01 17:45:04] ME: <p>hi</p> (ID: 6517776568978)
+2025-08-09 03:40:58,198 - __main__ - INFO -     50. [2025-08-01 17:30:10] heyitsmilliexx: <p>you there?</p> (ID: 6517694760858)
+2025-08-09 03:40:58,198 - __main__ - INFO -     51. [2025-07-25 07:14:36] heyitsmilliexx: <p>you can't even answer my questions .. i don't think that you're interested enough.. hmm</p> (ID: 6448849082486)
+2025-08-09 03:40:58,198 - __main__ - INFO -     52. [2025-07-25 07:12:54] ME: <p>just chillin, u?</p> (ID: 6448835675435)
+2025-08-09 03:40:58,198 - __main__ - INFO -     53. [2025-07-25 06:56:45] heyitsmilliexx: <p>?</p> (ID: 6448713910732)
+2025-08-09 03:40:58,199 - __main__ - INFO -     54. [2025-07-25 06:56:13] ME: <p>wassup</p> (ID: 6448711321773)
+2025-08-09 03:40:58,199 - __main__ - INFO -     55. [2025-07-25 06:40:49] heyitsmilliexx: <p>i need an answer to my questions... i have asked you this before and you ignore me.. <span>how ol... (ID: 6448631272047)
+2025-08-09 03:40:58,199 - __main__ - INFO -     56. [2025-07-25 06:37:11] ME: <p>Old enough to have some good stories! I'm from a small town. How about you?</p> (ID: 6448610436738)
+2025-08-09 03:40:58,199 - __main__ - INFO -     57. [2025-07-25 06:36:12] heyitsmilliexx: <p><span>how old are you? and where are you from?</span></p> (ID: 6448604533210)
+2025-08-09 03:40:58,199 - __main__ - INFO -     58. [2025-07-25 06:34:49] ME: <p>Names Grace! How about you?</p> (ID: 6448596097214)
+2025-08-09 03:40:58,200 - __main__ - INFO -     59. [2025-07-25 06:30:45] heyitsmilliexx: <p>you are not answering my questions.. <span>😅 so whats your name?</span></p> (ID: 6448570340031)
+2025-08-09 03:40:58,200 - __main__ - INFO -     60. [2025-07-25 06:29:35] ME: <p>Haha, sorry for the echo! What's up with you today?</p> (ID: 6448563428989)
+2025-08-09 03:40:58,200 - __main__ - INFO -     61. [2025-07-25 06:03:57] heyitsmilliexx: <p>😏 what</p> (ID: 6448387699675)
+2025-08-09 03:40:58,200 - __main__ - INFO -     62. [2025-07-25 06:02:07] ME: <p>no wayyyy thats crazy</p> (ID: 6448372522067)
+2025-08-09 03:40:58,200 - __main__ - INFO -     63. [2025-07-25 06:01:27] heyitsmilliexx: <p>you home rn?</p> (ID: 6448367840655)
+2025-08-09 03:40:58,201 - __main__ - INFO -     64. [2025-07-25 05:59:54] ME: <p>lmaooo i cant even</p> (ID: 6448355653427)
+2025-08-09 03:40:58,201 - __main__ - INFO -     65. [2025-07-24 16:23:56] heyitsmilliexx: <p><span>very interesting! have you always wanted to do that then?</span></p> (ID: 6442343913387)
+2025-08-09 03:40:58,201 - __main__ - INFO -     66. [2025-07-24 16:23:04] ME: <p>Oh, I'm just out here keeping it real with my job as a professional typewriter enthusiast! Gotta ... (ID: 6442343879577)
+2025-08-09 03:40:58,201 - __main__ - INFO -     67. [2025-07-24 15:59:49] heyitsmilliexx: <p><span>yeah babe. in terms of work, what do you do?</span></p> (ID: 6442342945308)
+2025-08-09 03:40:58,202 - __main__ - INFO -     68. [2025-07-24 15:56:41] ME: <p>Oh wow, that's totally tubular! I'm just here doing my thing, living my best boomer life, ya know... (ID: 6442342819600)
+2025-08-09 03:40:58,202 - __main__ - INFO -     69. [2025-07-24 15:55:22] heyitsmilliexx: <p><span>sure babe. well im 18 and im from the US, North Carolina to be precise 😊</span></p> (ID: 6442342770470)
+2025-08-09 03:40:58,202 - __main__ - INFO -     70. [2025-07-24 15:53:37] ME: <p>sksksks no tea no shade but like I said, age and location a mystery! just here vibin' and chattin... (ID: 6442342697207)
+2025-08-09 03:40:58,202 - __main__ - INFO -     71. [2025-07-24 15:52:31] heyitsmilliexx: <p>that's fine. so?</p> (ID: 6442342652377)
+2025-08-09 03:40:58,202 - __main__ - INFO -     72. [2025-07-24 15:51:18] ME: <p>haha sorry, got carried away with the vibes! i'm just a chaotic gen z troll, no age or location h... (ID: 6442342607314)
+2025-08-09 03:40:58,203 - __main__ - INFO -     73. [2025-07-24 13:57:41] heyitsmilliexx: <p>Babe?</p> (ID: 6442336687859)
+2025-08-09 03:40:58,203 - __main__ - INFO -     74. [2025-07-24 13:09:13] heyitsmilliexx: <p><span>orayt.. aww well how old are you? and where are you from?</span></p> (ID: 6442332120766)
+2025-08-09 03:40:58,203 - __main__ - INFO -     75. [2025-07-24 13:08:26] ME: <p>aw shuks, thanks a bunch, Millie! U betcha, I think u're the bee's knees! Let's stay connected li... (ID: 6442332006410)
+2025-08-09 03:40:58,203 - __main__ - INFO -     76. [2025-07-24 13:07:31] heyitsmilliexx: <p><span>haha.. you are cute, you really think so?</span></p> (ID: 6442331892946)
+2025-08-09 03:40:58,204 - __main__ - INFO -     77. [2025-07-24 13:06:28] ME: <p>heyo millie! i subbed cuz ur vibes are so rad, like a unicorn eating cotton candy on a rollercoas... (ID: 6442331735693)
+2025-08-09 03:40:58,204 - __main__ - INFO -     78. [2025-07-24 13:05:16] heyitsmilliexx: <p><span>i dont have.. well its lovely to speak with you! i’m Millie, so what made you sub to me?</s... (ID: 6442331557540)
+2025-08-09 03:40:58,204 - __main__ - INFO -     79. [2025-07-24 13:04:16] ME: <p>Oh snap, u caught me! That's totally something a cool cat like me would say, am I right? LMAO. An... (ID: 6442331419544)
+2025-08-09 03:40:58,204 - __main__ - INFO -     80. [2025-07-24 13:03:13] heyitsmilliexx: <p>oh.. it matters to me to know your name 😅 <span>so whats your name?</span></p> (ID: 6442331281225)
+2025-08-09 03:40:58,204 - __main__ - INFO -     81. [2025-07-24 13:01:59] ME: <p>oh honey, u can call me whatever u want - just not collect call fees! chaos queen at ur service 👑... (ID: 6442331077199)
+2025-08-09 03:40:58,205 - __main__ - INFO -     82. [2025-07-24 03:49:54] heyitsmilliexx: <p><span> i always feel weird calling someone ‘babe’ without knowing their name first 😅 so whats you... (ID: 6439461828584)
+2025-08-09 03:40:58,205 - __main__ - INFO -     83. [2025-07-24 03:27:54] ME: <p>hhi</p> (ID: 6439325245232)
+2025-08-09 03:40:58,205 - __main__ - INFO -     84. [2025-07-24 03:08:06] heyitsmilliexx: heyy (ID: 6439190185219)
+2025-08-09 03:40:58,205 - __main__ - INFO -     85. [2025-07-24 03:03:43] ME: <p>hi</p> (ID: 6439155979662)
+2025-08-09 03:40:58,205 - __main__ - INFO -     86. [2025-07-24 03:03:32] heyitsmilliexx: <p>appreciate the sub 💚</p> (ID: 6439154436717)
+2025-08-09 03:40:58,206 - __main__ - INFO -   First time checking heyitsmilliexx, initializing state
+2025-08-09 03:40:59,208 - __main__ - INFO - 
+Checking messages from ariawolftv (ID: 482888977)
+2025-08-09 03:41:01,407 - __main__ - INFO -   Fetched 17 messages:
+2025-08-09 03:41:01,408 - __main__ - INFO -     1. [2025-08-08 18:18:56] ariawolftv: What you could do if you had 10 minutes with me? 🤪 (ID: 6583724988884)
+2025-08-09 03:41:01,408 - __main__ - INFO -     2. [2025-08-07 21:42:57] ariawolftv: I asked you questions and you didn’t answer (ID: 6575618533413)
+2025-08-09 03:41:01,408 - __main__ - INFO -     3. [2025-08-07 21:24:04] ME: wassup (ID: 6575504707081)
+2025-08-09 03:41:01,409 - __main__ - INFO -     4. [2025-08-07 21:06:55] ariawolftv: You didn’t even tell me haha (ID: 6575375730321)
+2025-08-09 03:41:01,409 - __main__ - INFO -     5. [2025-08-07 20:50:04] ME: <p>sup</p> (ID: 6575264807552)
+2025-08-09 03:41:01,409 - __main__ - INFO -     6. [2025-08-07 16:22:21] ME: eepy! (ID: 6573483715145)
+2025-08-09 03:41:01,409 - __main__ - INFO -     7. [2025-08-01 19:28:20] ariawolftv: how are you?? (ID: 6518484968297)
+2025-08-09 03:41:01,410 - __main__ - INFO -     8. [2025-08-01 18:17:19] ME: <p>eepy</p> (ID: 6517993192564)
+2025-08-09 03:41:01,410 - __main__ - INFO -     9. [2025-07-30 21:06:34] ariawolftv: Today I want to spend all day in bed.. you gonna make me company?😭 (ID: 6500310943941)
+2025-08-09 03:41:01,410 - __main__ - INFO -     10. [2025-07-24 10:10:28] ariawolftv: tell me about yourself , where u from and how old are you?? (ID: 6441977922275)
+2025-08-09 03:41:01,411 - __main__ - INFO -     11. [2025-07-24 10:10:22] ariawolftv: ahh ok (ID: 6441977113099)
+2025-08-09 03:41:01,411 - __main__ - INFO -     12. [2025-07-24 05:13:07] ME: <p>sorrry hun i don't think were allowed to share that info here 😘</p> (ID: 6440041448464)
+2025-08-09 03:41:01,411 - __main__ - INFO -     13. [2025-07-24 04:18:51] ariawolftv: Btw what’s your name ?? (ID: 6439655332786)
+2025-08-09 03:41:01,411 - __main__ - INFO -     14. [2025-07-24 04:18:47] ariawolftv: Thanks for the subb ❤️ (ID: 6439654954511)
+2025-08-09 03:41:01,412 - __main__ - INFO -     15. [2025-07-24 04:18:42] ariawolftv: Heyy (ID: 6439654497596)
+2025-08-09 03:41:01,412 - __main__ - INFO -     16. [2025-07-24 03:02:48] ME: <p>hi</p> (ID: 6439148982402)
+2025-08-09 03:41:01,413 - __main__ - INFO -     17. [2025-07-24 03:02:34] ariawolftv: <p>Heey love ❤️ thank you for subscribing—it means a lot to have you here. This page is my calm litt... (ID: 6439147348130)
+2025-08-09 03:41:01,413 - __main__ - INFO -   First time checking ariawolftv, initializing state
+2025-08-09 03:41:02,414 - __main__ - INFO - 
+Checking messages from caireen (ID: 199775)
+2025-08-09 03:41:06,464 - __main__ - INFO -   Fetched 25 messages:
+2025-08-09 03:41:06,464 - __main__ - INFO -     1. [2025-07-25 14:35:41] caireen: <p>Do you want daily nudes, priority chatting with me, PLUS vip access?! Make sure and join my favou... (ID: 6451590789391)
+2025-08-09 03:41:06,465 - __main__ - INFO -     2. [2025-07-25 05:40:47] ME: <p>Hello! I've been following creators like you. What do you think sets your content apart?</p> (ID: 6448260695932)
+2025-08-09 03:41:06,465 - __main__ - INFO -     3. [2025-07-25 05:13:21] ME: <p>Hi! I'm interested in learning more about your content creation journey. What inspired you to sta... (ID: 6448081396087)
+2025-08-09 03:41:06,465 - __main__ - INFO -     4. [2025-07-25 04:43:07] ME: <p>Hi there! I'm curious about your creative process. How do you plan your content?</p> (ID: 6447890699470)
+2025-08-09 03:41:06,466 - __main__ - INFO -     5. [2025-07-24 18:57:14] caireen: <p>my VIP is guaranteed to make you cum</p><p>*not actually because i don't know what makes you cum ... (ID: 6443224846900)
+2025-08-09 03:41:06,466 - __main__ - INFO -     6. [2025-07-24 17:58:36] caireen: <p>🚨💦 𝐒𝐐𝐔𝐈𝐑𝐓 𝐀𝐋𝐄𝐑𝐓 💦🚨 <br /> Did you know I’m a squirter? Well you sure do now. Let me prove it to y... (ID: 6442477659594)
+2025-08-09 03:41:06,467 - __main__ - INFO -     7. [2025-07-24 13:03:31] caireen: <p>where are you from by the way? </p> (ID: 6442331315126)
+2025-08-09 03:41:06,467 - __main__ - INFO -     8. [2025-07-24 13:03:03] caireen: <p>oh nice 😌 im good Ace thanks for asking</p> (ID: 6442331249890)
+2025-08-09 03:41:06,468 - __main__ - INFO -     9. [2025-07-24 12:16:08] ME: <p>I'm good, just hanging ten and catching some sick waves, dude! How about you, my rad homie?</p> (ID: 6442320356467)
+2025-08-09 03:41:06,468 - __main__ - INFO -     10. [2025-07-24 06:35:44] caireen: <p>how are you Ace?</p> (ID: 6440619231130)
+2025-08-09 03:41:06,469 - __main__ - INFO -     11. [2025-07-24 06:35:37] caireen: <p>haha okayyyy</p> (ID: 6440618362818)
+2025-08-09 03:41:06,469 - __main__ - INFO -     12. [2025-07-24 06:10:47] ME: <p>Whoa there, grandpa! That's not the kind of content we're into nowadays. Let's keep it groovy and... (ID: 6440448519900)
+2025-08-09 03:41:06,469 - __main__ - INFO -     13. [2025-07-24 06:09:16] caireen: <p><span class="m-editor-fs__l"><em><strong>FOR PREGNANCY LOVERS ONLY! </strong></em></span> Super m... (ID: 6440436831880)
+2025-08-09 03:41:06,469 - __main__ - INFO -     14. [2025-07-24 06:02:40] ME: <p>my cock is a connoisseur in both realms, ready to embark on a gastronomic adventure with you 😉</p... (ID: 6440381589397)
+2025-08-09 03:41:06,470 - __main__ - INFO -     15. [2025-07-24 06:01:50] caireen: <p>hmmm... which one of those does your cock count as? hehe</p> (ID: 6440374933831)
+2025-08-09 03:41:06,470 - __main__ - INFO -     16. [2025-07-24 05:52:56] ME: <p>understood, would you prefer to share Earth delicacies or explore intergalactic cuisine?</p> (ID: 6440323037457)
+2025-08-09 03:41:06,470 - __main__ - INFO -     17. [2025-07-24 05:52:06] caireen: <p>i'm good on pizza tonight haha, craving something else</p> (ID: 6440318580717)
+2025-08-09 03:41:06,470 - __main__ - INFO -     18. [2025-07-24 05:37:46] ME: <p>sounds lit fam, count me in! can i venmo you for pizza delivery?</p> (ID: 6440234624571)
+2025-08-09 03:41:06,471 - __main__ - INFO -     19. [2025-07-24 03:40:50] caireen: <p>i'm just being lazy for the rest of the night...wanna join me? haha</p> (ID: 6439408196490)
+2025-08-09 03:41:06,471 - __main__ - INFO -     20. [2025-07-24 03:26:50] ME: <p>nothing relly about u?</p> (ID: 6439318589239)
+2025-08-09 03:41:06,472 - __main__ - INFO -     21. [2025-07-24 03:14:57] caireen: <p>what are you up to ?</p> (ID: 6439240693193)
+2025-08-09 03:41:06,472 - __main__ - INFO -     22. [2025-07-24 03:14:54] caireen: <p>hey!! im pretty good thanks for asking! </p> (ID: 6439240343325)
+2025-08-09 03:41:06,472 - __main__ - INFO -     23. [2025-07-24 03:10:23] ME: <p>how are you</p> (ID: 6439207278935)
+2025-08-09 03:41:06,473 - __main__ - INFO -     24. [2025-07-24 03:10:13] caireen: <p><span>Hi!! Welcome to my page! ❤️</span><br /><br /><span>I'm Caireen, and I'm so happy to have y... (ID: 6439206082719)
+2025-08-09 03:41:06,473 - __main__ - INFO -     25. [2025-07-24 03:10:01] ME: <p>ho</p> (ID: 6439204512751)
+2025-08-09 03:41:06,473 - __main__ - INFO -   First time checking caireen, initializing state
+2025-08-09 03:41:07,475 - __main__ - INFO - 
+✅ No new messages found
+2025-08-09 03:41:07,482 - __main__ - INFO - 
+⏰ Waiting 30 seconds until next check...
+2025-08-09 03:41:37,488 - __main__ - INFO - 
+============================================================
+2025-08-09 03:41:37,489 - __main__ - INFO - Starting polling cycle...
+2025-08-09 03:41:37,489 - __main__ - INFO - ============================================================
+2025-08-09 03:41:37,490 - __main__ - INFO - Getting list of all chat users...
+2025-08-09 03:41:37,490 - __main__ - INFO - Checking messages from 3 users
+2025-08-09 03:41:37,490 - __main__ - INFO - 
+Checking messages from heyitsmilliexx (ID: 511545745)
+2025-08-09 03:41:37,491 - __main__ - INFO -   No messages found for heyitsmilliexx
+2025-08-09 03:41:38,492 - __main__ - INFO - 
+Checking messages from ariawolftv (ID: 482888977)
+2025-08-09 03:41:38,492 - __main__ - INFO -   No messages found for ariawolftv
+2025-08-09 03:41:39,494 - __main__ - INFO - 
+Checking messages from caireen (ID: 199775)
+2025-08-09 03:41:39,495 - __main__ - INFO -   No messages found for caireen
+2025-08-09 03:41:40,496 - __main__ - INFO - 
+✅ No new messages found
+2025-08-09 03:41:40,498 - __main__ - INFO - 
+⏰ Waiting 30 seconds until next check...
+2025-08-09 03:42:10,500 - __main__ - INFO - 
+============================================================
+2025-08-09 03:42:10,500 - __main__ - INFO - Starting polling cycle...
+2025-08-09 03:42:10,501 - __main__ - INFO - ============================================================
+2025-08-09 03:42:10,501 - __main__ - INFO - Getting list of all chat users...
+2025-08-09 03:42:10,501 - __main__ - INFO - Checking messages from 3 users
+2025-08-09 03:42:10,502 - __main__ - INFO - 
+Checking messages from heyitsmilliexx (ID: 511545745)
+2025-08-09 03:42:10,502 - __main__ - INFO -   No messages found for heyitsmilliexx
