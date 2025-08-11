@@ -146,3 +146,30 @@ $RECYCLE.BIN/
 
 # Project Specific
 typings
+
+# Authentication and sensitive files
+auth.json
+auth.json.example
+
+# Logs
+*.log
+logs/
+_dump/logs/
+
+# State files
+*state*.json
+poller_state*.json
+
+# Analysis and data files
+*.csv
+all_fans_analysis_*.csv
+working_api_endpoints_*.csv
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Local configuration
+.env.local
+config.local.json
